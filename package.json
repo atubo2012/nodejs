@@ -5,6 +5,6 @@
   "description": "第一个node.js程序",
   "keywords":["node.js","javascript"],
   "dependencies": {
-    "mysql":"latest"
+    "mysql" : "latest"
   }
 }
