@@ -1,0 +1,10 @@
+{
+  "name":"nodejstest",
+  "version":"0.0.0",
+  "author": "张三",
+  "description": "第一个node.js程序",
+  "keywords":["node.js","javascript"],
+  "dependencies": {
+    "mysql":"latest"
+  }
+}
