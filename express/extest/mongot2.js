@@ -8,6 +8,8 @@ var options = {
     }
 };
 
+
+
 var url = 'mongodb://100td:27117/test';
 MongoClient.connect(url,function (err,db) {
     assert.equal(null,err);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
