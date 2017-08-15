@@ -1,0 +1,25 @@
+#参考https://github.com/github/gitignore/blob/master/Node.gitignore中所列的应忽略文件
+
+#Logs
+log
+*.log
+*.log.*
+
+#Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+
+#the third modules
+node_moudules/
+
+#npm cache
+.npm
+
+#pm2 cache
+.pm2
+
+#webstorm的配置文件
+.idea/
