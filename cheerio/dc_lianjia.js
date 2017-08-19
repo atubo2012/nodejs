@@ -6,6 +6,10 @@ const cDburl = 'mongodb://100td:27117/test';
 let MongoClient = require('mongodb').MongoClient
     ,assert = require('assert');
 
+let xlsx = require('node-xlsx');
+let fs = require('fs');
+
+
 //设置采集参数
 let gSiteUrl = 'http://sh.lianjia.com';
 let gInitUrl = gSiteUrl + '/ershoufang/lujiazui/s1'; //访问链接，以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。//TODO：板块入口地址做成参数化文件。
@@ -18,14 +22,15 @@ const cMaxPageNum = 2;    //采集的记录的页数，该参数会影响单个�
 let gParsedData = [];       //解析后的全部结果
 const cCurrentDate = new Date().toLocaleDateString(); //当前日期，入库标准字段。
 
+//数据采集、解析入库
+dc();
 
-//对第一页的解析
-dc(gCurrentUrl);
-
-
-function dc(url) {
+/**
+ * 主调函数：采集、入库
+ */
+function dc() {
     try {
-        http.get(url, function (res) {
+        http.get(gCurrentUrl, function (res) {
 
             let _htmlcontent = '';
             res.on('data', function (data) {
@@ -38,9 +43,11 @@ function dc(url) {
 
                 if ('' !== gNextPageUrl && gCurrentPageNum<cMaxPageNum) {
                     setTimeout(function () {
-                        dc(gNextPageUrl);
+                        gCurrentUrl = gNextPageUrl;
+                        dc();
                     }, cSleepTime);
-                }else{
+                }
+                else{
                     //达到最后一页则退出
                     save2db(gParsedData);
                 }
@@ -50,10 +57,10 @@ function dc(url) {
                 console.error(e.message);
             })
         });
+
     } catch (e) {
-        console.error('gCurrentUrl=[' + currentUrl + ']');
+        console.error('gCurrentUrl=[' + gCurrentUrl + ']');
         console.error('gCurrentPageNum=[' + gCurrentPageNum + ']');
-        console.error('_htmlcontent=[' + _htmlcontent + ']');
         console.error('exception=[' + e + ']');
     }
 
@@ -144,7 +151,7 @@ function parseEsf(html) {
 
 }
 
-function save2db(dataArray) {
+function save2db() {
     MongoClient.connect(cDburl,function (err,db) {
         assert.equal(null, err);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
         console.log("Connection successfully to server");
@@ -153,7 +160,7 @@ function save2db(dataArray) {
             tbnm: 'esf',
             sel: {'username': 1, 'name': 1, 'email': 1, '_id': 0},
             where: {name: /a/},
-            insertdt: dataArray,
+            insertdt: gParsedData,
             updatedt: {$set: {email: 'sh_ek@126.com'}},
             deletedt: {name: /王雪/}
         };
@@ -169,6 +176,7 @@ function save2db(dataArray) {
 
 
         db.close();
-        console.log('保存完成，关闭数据库。')
+        console.log('保存完成，关闭数据库。');
+
     });
 }
