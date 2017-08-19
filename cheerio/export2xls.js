@@ -9,7 +9,7 @@ let xlsx = require('node-xlsx');
 let fs = require('fs');
 const cXlsPath = './';
 
-const cCurrentDate = new Date().toLocaleDateString();
+const cCurrentDate = formatDate(new Date(),'yyyyMMdd');
 
 export2xls();
 
@@ -56,4 +56,19 @@ function selectData(db, callback) {
         }
         callback(result);
     });
+}
+
+function formatDate(date, style) {
+    let y = date.getFullYear();
+    let M = "0" + (date.getMonth() + 1);
+    M = M.substring(M.length - 2);
+    let d = "0" + date.getDate();
+    d = d.substring(d.length - 2);
+    let h = "0" + date.getHours();
+    h = h.substring(h.length - 2);
+    let m = "0" + date.getMinutes();
+    m = m.substring(m.length - 2);
+    let s = "0" + date.getSeconds();
+    s = s.substring(s.length - 2);
+    return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
 }
