@@ -9,6 +9,7 @@ let xlsx = require('node-xlsx');
 let fs = require('fs');
 const cXlsPath = './';
 
+
 const cCurrentDate = formatDate(new Date(),'yyyyMMdd');
 
 export2xls();
