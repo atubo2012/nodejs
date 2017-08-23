@@ -2,25 +2,29 @@
 
 let http = require('http');
 let cheerio = require('cheerio');
-const cDburl = 'mongodb://100td:27117/test';
+let config = require('./config');
+let ut  = require('./utils');
+
+const cDburl = config.cDburl;
 let MongoClient = require('mongodb').MongoClient
     ,assert = require('assert');
 
-let xlsx = require('node-xlsx');
-let fs = require('fs');
 
 
-//设置采集参数
-let gSiteUrl = 'http://sh.lianjia.com';
-let gInitUrl = gSiteUrl + '/ershoufang/lujiazui/s1'; //访问链接，以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。//TODO：板块入口地址做成参数化文件。
-let gCurrentUrl = gInitUrl; //当前页为初始页
+//从配置文件中获取参数
+let cSiteUrl = config.cSiteUrl;
+let cInitUrl = cSiteUrl + config.cInitUrl; //访问链接，以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。//TODO：板块入口地址做成参数化文件。
 
+const cDcInterval = config.cDcInterval;    //前后两次http访问之间的间隔时间，防止被反爬虫策略阻断。单位是毫秒。
+const cMaxPageNum = config.cMaxPageNum;    //采集的记录的页数，该参数会影响单个进程的内存上限。todo：将该参数分成开发模式和生产模式配置
+
+//全局变量，多个函数会操作该
+let gCurrentUrl = cInitUrl; //当前页为初始页
 let gNextPageUrl = '';      //"下一页"的url，根据该字段的值判断是否继续遍历下一页。
-const cSleepTime = 2780;    //前后两次http访问之间的间隔时间，防止被反爬虫策略阻断。单位是毫秒。
 let gCurrentPageNum = 0;    //初始的页面序号为0，开始解析html内容的时候，会自动加1
-const cMaxPageNum = 2;    //采集的记录的页数，该参数会影响单个进程的内存上限。todo：将该参数分成开发模式和生产模式配置
 let gParsedData = [];       //解析后的全部结果
-const cCurrentDate = new Date().toLocaleDateString(); //当前日期，入库标准字段。
+
+const cCurrentDate = ut.formatDate(new Date(),'yyyyMMdd'); //当前日期，入库标准字段。
 
 //数据采集、解析入库
 dc();
@@ -30,6 +34,7 @@ dc();
  */
 function dc() {
     try {
+        console.log('正在请求第' + (1+gCurrentPageNum) + gCurrentUrl);
         http.get(gCurrentUrl, function (res) {
 
             let _htmlcontent = '';
@@ -45,10 +50,9 @@ function dc() {
                     setTimeout(function () {
                         gCurrentUrl = gNextPageUrl;
                         dc();
-                    }, cSleepTime);
-                }
-                else{
-                    //达到最后一页则退出
+                    }, cDcInterval);
+                }else{
+                    //达到最后一页则保存数据到数据
                     save2db(gParsedData);
                 }
             });
@@ -57,13 +61,11 @@ function dc() {
                 console.error(e.message);
             })
         });
-
     } catch (e) {
         console.error('gCurrentUrl=[' + gCurrentUrl + ']');
         console.error('gCurrentPageNum=[' + gCurrentPageNum + ']');
         console.error('exception=[' + e + ']');
     }
-
 }
 
 
@@ -72,8 +74,9 @@ function dc() {
  * @param html
  */
 function parseEsf(html) {
-    console.log('==================正在解析第' + ++gCurrentPageNum + '页');
+    console.log('正在解析第' + ++gCurrentPageNum + '页html');
     let $ = cheerio.load(html);
+    let _nowtime = ut.formatDate(new Date(),'hhmmss');
 
     let esfs = $('div.info');//定位每条房源信息最内侧的元素<div class='info'>
     esfs.each(function () {
@@ -126,11 +129,16 @@ function parseEsf(html) {
             tags: _tags,         //地铁距离、年限
             size:_size,         //面积
             title: _title,      //房源描述
-            hrurl:gSiteUrl+_hrurl, //小区url
-            url: gSiteUrl+_url   ,  //房源url
+            hrurl:cSiteUrl+_hrurl, //小区url
+            url: cSiteUrl+_url   ,  //房源url
             cd: cCurrentDate,       //当前日期
-            ct: new Date().toLocaleTimeString() //时间戳
+            ct: _nowtime //时间戳
         };
+
+        //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
+        let cfmDisct = ut.getCfmDisct(esfInfo.size,esfInfo.floor,esfInfo.tprice);
+        //将核定折扣合并到房源信息中。
+        esfInfo = Object.assign(esfInfo,cfmDisct);
 
         //将本条房源信息加入结果集
         gParsedData.push(esfInfo);
@@ -142,12 +150,10 @@ function parseEsf(html) {
     let lastPageLink = $('div.c-pagination').children().last();
     let lastPageTitle = lastPageLink.text().trim();
     if (lastPageTitle === '下一页') {
-        gNextPageUrl = gSiteUrl + lastPageLink.attr('href');
+        gNextPageUrl = cSiteUrl + lastPageLink.attr('href');
     } else {
         gNextPageUrl = '';
     }
-
-    console.log('gNextPageUrl=' + gNextPageUrl);
 
 }
 
@@ -180,3 +186,4 @@ function save2db() {
 
     });
 }
+
