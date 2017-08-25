@@ -32,7 +32,7 @@ exports.getCfmDisct = function(size,floor,tprice){
     }else if(size>200){
         sizeDisct = 0.8;
     }
-    console.log(size+'平米:'+sizeDisct*10+'折');
+    //console.log(size+'平米:'+sizeDisct*10+'折');
 
     let tpriceDisct = 1;
     if(tprice>1000 && tprice<=2000){
@@ -40,7 +40,7 @@ exports.getCfmDisct = function(size,floor,tprice){
     }else if(tprice>2000){
         sizeDisct = 0.8;
     }
-    console.log(tprice+'万:'+tpriceDisct*10+'折');
+    //console.log(tprice+'万:'+tpriceDisct*10+'折');
 
     let floorDisct = 1;
     let level = 0;
@@ -66,9 +66,22 @@ exports.getCfmDisct = function(size,floor,tprice){
 
     let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)).toFixed(3);
     cfmd =Math.round(cfmd *100)/100; //最低折扣
-    console.log(floortype+'-'+floor+':'+floorDisct*10+'折');
-    console.log('核定折扣:'+cfmd);
+    //console.log(floortype+'-'+floor+':'+floorDisct*10+'折');
+    //console.log('核定折扣:'+cfmd);
     return {'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'cfmd':cfmd};
+
+};
+
+/**
+ * 显示内存消耗变化情况在重要函数的开始和结束时调用。
+ * 参数值一般填写：开始XXXX、结束XXXXX
+ */
+exports.showLog = function(msg) {
+    let mem = process.memoryUsage();
+    let format = function(bytes) {
+        return (bytes/1024/1024).toFixed(2)+'MB';
+    };
+    console.log('rss ' + format(mem.rss)+' ht '+format(mem.heapTotal) + ' hu ' + format(mem.heapUsed) + ' :'+msg);
 
 };
 

@@ -50,7 +50,7 @@ dc();
  */
 function dc() {
     try {
-        console.log('正在请求第' + (1+gCurrentPageNum) + gCurrentUrl);
+        ut.showLog('开始请求第[' + (1+gCurrentPageNum) +']页['+gCurrentUrl+']');
         http.get(gCurrentUrl, function (res) {
 
             let _htmlcontent = '';
@@ -62,12 +62,13 @@ function dc() {
                 //接收完全部数据后解析数据
                 parseEsf(_htmlcontent);
 
-                if ('' !== gNextPageUrl && gCurrentPageNum<cMaxPageNum) {
+                if ('' !== gNextPageUrl && gCurrentPageNum<=cMaxPageNum) {
                     setTimeout(function () {
                         gCurrentUrl = gNextPageUrl;
                         dc();
                     }, cDcInterval);
                 }else{
+                    ut.showLog('开始保存数到DB['+gNextPageUrl+']['+gCurrentPageNum+']');
                     //达到最后一页则保存数据到数据
                     save2db(gParsedData);
                 }
@@ -90,7 +91,8 @@ function dc() {
  * @param html
  */
 function parseEsf(html) {
-    console.log('正在解析第' + ++gCurrentPageNum + '页html');
+    ut.showLog('正在解析第' + ++gCurrentPageNum + '页html');
+
     let $ = cheerio.load(html);
     let _nowtime = ut.formatDate(new Date(),'hhmmss');
 
@@ -174,9 +176,9 @@ function parseEsf(html) {
 }
 
 function save2db() {
+    ut.showLog('开始数据入库');
     MongoClient.connect(cDburl,function (err,db) {
         assert.equal(null, err);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
-        console.log("Connection successfully to server");
 
         let circm = {
             tbnm: 'esf',
@@ -192,15 +194,10 @@ function save2db() {
             assert.equal(err, null);
             assert.equal(circm.insertdt.length, result.result.n); //result包括了result的document
             assert.equal(circm.insertdt.length, result.ops.length); //ops是包括了_id的document
-            console.log('保存房源信息到数据库: ' + circm.tbnm+' 共'+result.result.n+'条。');
+            ut.showLog('完成保存房源到DB: ' + circm.tbnm+' 共'+result.result.n+'条。');
             //callback(result); //todo:确认callback函数的用法
             db.close();
-            console.log('保存完成，关闭数据库。');
         });
-
-
-
-
 
     });
 }

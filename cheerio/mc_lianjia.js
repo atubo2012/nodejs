@@ -19,24 +19,23 @@ saveHrAvgPrice();
 
 function saveHrAvgPrice() {
 
+    ut.showLog('开始计算小区均价，连接DB');
     MongoClient.connect(cDburl, function (err, db) {
 
-        console.log('连接DB成功！');
         genHrAvgPrice(db, function (result) {
 
-            console.log('生成小区均价为：'+JSON.stringify(result));
+            //console.log('生成小区均价为：'+JSON.stringify(result));
             //准备数据库操作的
             let circm = {
                 tbnm: 'hrhis',
-                sel: {'显示字段1': 1, '显示字段2': 1, '显示字段3': 1, '_id': 0},
-                where: {name: /这里是like的内容/},
+                sel: {'field1': 1, 'field2': 1, 'field3': 1, '_id': 0},
+                where: {name: /like condition/},
                 insertdt: result,  //将被插入数据库的数据(数组结构)
                 updatedt: {$set: {email: '这里设置要对字段更新的内容'}},
-                deletedt: {name: /这里填写删除的条件/},
+                deletedt: {name: /condition/},
                 logmsg:'保存小区均价信息到数据库:'
             };
 
-            console.log('保存小区均价....');
             let coll = db.collection(circm.tbnm);
             coll.insertMany(circm.insertdt, function (err, r) {
                 assert.equal(err, null);
@@ -45,8 +44,7 @@ function saveHrAvgPrice() {
                 console.log(circm.logmsg + circm.tbnm+' 共'+r.result.n+'条。');
 
 
-                console.log('开始遍历小区均价信息，更新房源信息中本日的均价字段......');
-
+                ut.showLog('开始更新房源的均价字段');
                 for(let i=0; i<result.length;i++)
                 {
                     let _id = result[i]._id;
@@ -55,17 +53,18 @@ function saveHrAvgPrice() {
                     _avgPrice = _avgPrice.toFixed(0); //去除小数点
 
 
-
                     db.collection('esf').updateMany(
                         {'cd':{$eq:today},'hrname':{$eq:_hrname}},//当日小区的均价
                         {$set :{'hrap':Number(_avgPrice)}},
                         function (err,r) {
                             assert.equal(err, null);
-                            console.log('小区['+_hrname+']的均价被更新['+r.result.n+']条。均价：['+_avgPrice+']')
+                            ut.showLog('['+_hrname+']挂牌均价=['+_avgPrice+']')
                         });
+
+                    //最后一条结束后则关闭数据库连接
                     if (i === (result.length - 1)) {
-                        db.close();  // 关闭数据库连接
-                        console.log(i+'关闭DB成功。');
+                        db.close();
+                        ut.showLog('完成更新房源的均价字段，关闭DB');
                     }
                 }
             });
