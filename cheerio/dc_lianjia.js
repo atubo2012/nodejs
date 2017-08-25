@@ -1,4 +1,21 @@
 'use strict';
+/**
+ * 主程序编码规范：
+ * 1、代码顺序：
+ * （1）引入第三方模块
+ * （2）引入配置文件和实用工具
+ * （3）声明主程序中使用的常量变量，c开头
+ * （4）声明主程序中使用的全局变量，g开头。变量名都不用技术语言，而用业务语言
+ * （5）主程序入口函数
+ * （6）被主程序入口函数调用的其它函数
+ *
+ * 回归测试案例：
+ * 1、采集数据   ：dc_lianjia.js
+ * 2、小区均价采集：dc_hrup.js
+ * 3、计算房源笋度：mc_genbbs.js
+ * 4、导出数据   ：export2xls.js
+ * 5、自动发送   ：dc.sh
+ */
 
 let http = require('http');
 let cheerio = require('cheerio');
@@ -8,7 +25,6 @@ let ut  = require('./utils');
 const cDburl = config.cDburl;
 let MongoClient = require('mongodb').MongoClient
     ,assert = require('assert');
-
 
 
 //从配置文件中获取参数
@@ -178,11 +194,13 @@ function save2db() {
             assert.equal(circm.insertdt.length, result.ops.length); //ops是包括了_id的document
             console.log('保存房源信息到数据库: ' + circm.tbnm+' 共'+result.result.n+'条。');
             //callback(result); //todo:确认callback函数的用法
+            db.close();
+            console.log('保存完成，关闭数据库。');
         });
 
 
-        db.close();
-        console.log('保存完成，关闭数据库。');
+
+
 
     });
 }
