@@ -18,6 +18,8 @@
     "monk":"^6.0.1",
     "promise": "latest",
     "nodemailer":"latest",
-    "node-xlsx":"^0.10.0"
+    "node-xlsx":"^0.10.0",
+    "async": "^2.5.0",
+    "iconv-lite": "^0.4.18"
   }
 }
