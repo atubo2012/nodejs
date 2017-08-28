@@ -21,10 +21,13 @@ let http = require('http');
 let cheerio = require('cheerio');
 let config = require('./config');
 let ut  = require('./utils');
+let iconv = require('iconv-lite');
 
 const cDburl = config.cDburl;
 let MongoClient = require('mongodb').MongoClient
     ,assert = require('assert');
+
+
 
 
 //从配置文件中获取参数
@@ -37,7 +40,7 @@ const cMaxPageNum = config.cMaxPageNum;    //采集的记录的页数，该参�
 //全局变量，多个函数会操作该
 let gCurrentUrl = cInitUrl; //当前页为初始页
 let gNextPageUrl = '';      //"下一页"的url，根据该字段的值判断是否继续遍历下一页。
-let gCurrentPageNum = 0;    //初始的页面序号为0，开始解析html内容的时候，会自动加1
+let gCurrentPageNum = 1;    //初始的页面序号为1
 let gParsedData = [];       //解析后的全部结果
 
 const cCurrentDate = ut.formatDate(new Date(),'yyyyMMdd'); //当前日期，入库标准字段。
@@ -50,25 +53,30 @@ dc();
  */
 function dc() {
     try {
-        ut.showLog('开始请求第[' + (1+gCurrentPageNum) +']页['+gCurrentUrl+']');
+        ut.showLog('开始请求第[' + (gCurrentPageNum) +']页['+gCurrentUrl+']');
         http.get(gCurrentUrl, function (res) {
 
             let _htmlcontent = '';
+            let chunks = [];
             res.on('data', function (data) {
                 _htmlcontent += data;
+                chunks.push(data);
             });
 
             res.on('end', function () {
+                let decodedContent = iconv.decode(Buffer.concat(chunks),'utf-8');
+
                 //接收完全部数据后解析数据
-                parseEsf(_htmlcontent);
+                parseEsf(decodedContent);
 
                 if ('' !== gNextPageUrl && gCurrentPageNum<=cMaxPageNum) {
                     setTimeout(function () {
+
                         gCurrentUrl = gNextPageUrl;
                         dc();
                     }, cDcInterval);
                 }else{
-                    ut.showLog('开始保存数到DB['+gNextPageUrl+']['+gCurrentPageNum+']');
+                    ut.showLog('开始保存数到DB');
                     //达到最后一页则保存数据到数据
                     save2db(gParsedData);
                 }
@@ -76,7 +84,12 @@ function dc() {
 
             res.on('error', function (e) {
                 console.error(e.message);
-            })
+                console.error('http error'+e.stack);
+            });
+
+            process.on('uncaughtException', function(e) {
+                console.log(e);
+            });
         });
     } catch (e) {
         console.error('gCurrentUrl=[' + gCurrentUrl + ']');
@@ -91,7 +104,7 @@ function dc() {
  * @param html
  */
 function parseEsf(html) {
-    ut.showLog('正在解析第' + ++gCurrentPageNum + '页html');
+    ut.showLog('正在解析第' + gCurrentPageNum + '页html');
 
     let $ = cheerio.load(html);
     let _nowtime = ut.formatDate(new Date(),'hhmmss');
@@ -124,9 +137,19 @@ function parseEsf(html) {
         dblk = dblk.siblings('a');  //todo：验证是否其他属性也可以按照“行政区”和“板块”值的采集模式。减少对dom的查找操作，提升效率。
         let _dist = dblk[0].children[0].data.trim();//行政区
         let _zone = dblk[1].children[0].data.trim();//板块
+        let _bdyear = dblk[1].next.data.trim().replace('|','');//建设年份
 
         let _tprice = Number(esf.find('.total-price').text());//总价，入库前需要用Number()转换型数值类型
+
+        let rowUprice = esf.find('.minor').text().trim();
         let _uprice = Number(esf.find('.minor').text().trim().replace('单价','').replace('元/平',''));//单价
+        if(isNaN(_uprice))
+        {
+            ut.showLog('单价原始数据['+rowUprice+']房源单价['+_uprice+'] , URL=['+_url+']');
+            ut.showLog('转码后的数据['+iconv.decode(rowUprice,'gb2312')+']');
+        }
+
+
 
         let _tags = []; //标签亮点
         esf.find('span.c-prop-tag2').each(function () {
@@ -146,6 +169,7 @@ function parseEsf(html) {
             sdist:_dist,        //行政区
             tags: _tags,         //地铁距离、年限
             size:_size,         //面积
+            bdyear: _bdyear,    //房屋建设年份
             title: _title,      //房源描述
             hrurl:cSiteUrl+_hrurl, //小区url
             url: cSiteUrl+_url   ,  //房源url
@@ -154,8 +178,8 @@ function parseEsf(html) {
         };
 
         //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
-        let cfmDisct = ut.getCfmDisct(esfInfo.size,esfInfo.floor,esfInfo.tprice);
-        //将核定折扣合并到房源信息中。
+        let cfmDisct = ut.getCfmDisct(esfInfo.size,esfInfo.floor,esfInfo.tprice,esfInfo.bdyear);
+        //将核定折价率合并到房源信息中。
         esfInfo = Object.assign(esfInfo,cfmDisct);
 
         //将本条房源信息加入结果集
@@ -169,6 +193,7 @@ function parseEsf(html) {
     let lastPageTitle = lastPageLink.text().trim();
     if (lastPageTitle === '下一页') {
         gNextPageUrl = cSiteUrl + lastPageLink.attr('href');
+        gCurrentPageNum++; //
     } else {
         gNextPageUrl = '';
     }

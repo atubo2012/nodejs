@@ -24,7 +24,7 @@ exports.formatDate = function(date, style) {
  * @param floor 楼层
  * @param tprice 总价
  */
-exports.getCfmDisct = function(size,floor,tprice){
+exports.getCfmDisct = function(size,floor,tprice,bdyear){
 
     let sizeDisct = 1;
     if(size>150 && size<=200){
@@ -42,7 +42,8 @@ exports.getCfmDisct = function(size,floor,tprice){
     }
     //console.log(tprice+'万:'+tpriceDisct*10+'折');
 
-    let floorDisct = 1;
+    let floorDisct = 1;  //默认的楼层折扣
+    let bdyearDisct = 1; //默认的建设年份折扣
     let level = 0;
     let floortype = '';
     if(floor.indexOf('地上')>=0)
@@ -64,11 +65,19 @@ exports.getCfmDisct = function(size,floor,tprice){
         }
     }
 
-    let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)).toFixed(3);
+    bdyear = bdyear.replace('|','').replace('年建','');
+    if(Number(bdyear)<1990)
+    {
+        bdyearDisct = 0.9;
+    }else if(Number(bdyear)<1998){
+        bdyearDisct = 0.95;
+    }
+
+    let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)*bdyearDisct.toFixed(2)).toFixed(3);
     cfmd =Math.round(cfmd *100)/100; //最低折扣
     //console.log(floortype+'-'+floor+':'+floorDisct*10+'折');
     //console.log('核定折扣:'+cfmd);
-    return {'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'cfmd':cfmd};
+    return {'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'bdyeard':bdyearDisct,'cfmd':cfmd};
 
 };
 
