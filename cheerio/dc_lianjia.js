@@ -45,25 +45,39 @@ let gParsedData = [];       //解析后的全部结果
 
 const cCurrentDate = ut.formatDate(new Date(),'yyyyMMdd'); //当前日期，入库标准字段。
 
-//数据采集、解析入库
-dc();
+main();
 
 /**
- * 主调函数：采集、入库
+ * 主调函数：根据命令行指定的参数，采集特定板块、行政区的数据
+ */
+function main (){
+    let args = process.argv.splice(2);
+    if(args.length<1){
+        console.error('应指定板块或行政区拼音名作为参数，如node dc_lianjia.js pudongxinqu');
+    }else{
+        console.error('开始采集:'+args[0]);
+        gCurrentUrl = config.cSiteUrl+config.cUrlPrefix+args[0]+config.cUrlPostfix
+        console.log(gCurrentUrl);
+        dc();
+    }
+}
+
+/**
+ * 二手房数据采集、入库
  */
 function dc() {
     try {
         ut.showLog('开始请求第[' + (gCurrentPageNum) +']页['+gCurrentUrl+']');
         http.get(gCurrentUrl, function (res) {
 
-            let _htmlcontent = '';
-            let chunks = [];
+            let chunks = []; //使用数组类变量而不是字符串类字段，以免将unicode双字节截断。
             res.on('data', function (data) {
-                _htmlcontent += data;
                 chunks.push(data);
             });
 
             res.on('end', function () {
+
+                //对html进行转码
                 let decodedContent = iconv.decode(Buffer.concat(chunks),'utf-8');
 
                 //接收完全部数据后解析数据
@@ -174,7 +188,8 @@ function parseEsf(html) {
             hrurl:cSiteUrl+_hrurl, //小区url
             url: cSiteUrl+_url   ,  //房源url
             cd: cCurrentDate,       //当前日期
-            ct: _nowtime //时间戳
+            ct: _nowtime, //时间戳
+            ds:'lj'       //数据源：链家
         };
 
         //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
