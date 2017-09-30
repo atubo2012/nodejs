@@ -10,7 +10,7 @@ let assert = require('assert');
  */
 exports.save2db =function (tbname,savedData,cDburl) {
     let log = require('./utils').showLog;
-    log('开始入库:'+tbname+':'+JSON.stringify(savedData));
+    //log('开始入库:'+tbname+':'+JSON.stringify(savedData));
     MongoClient.connect(cDburl,function (err,db) {
         assert.equal(err,null);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
 
