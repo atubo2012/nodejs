@@ -395,7 +395,7 @@ function export2xls(dburl, tbname) {
                 }
 
                 if (i === result.length - 1) {
-                    ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday() + '-' + ut.getNow());
+                    ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday() );
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。

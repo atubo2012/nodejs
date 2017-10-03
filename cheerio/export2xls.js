@@ -58,7 +58,7 @@ function export2xls() {
                 name: 'sheet1',
                 data: data_content
             }]);   //构建xlsx对象
-            fs.writeFileSync(cXlsPath+cCurrentDate+'.xlsx', file, 'binary'); // 写入
+            fs.writeFileSync(cXlsPath+'ljesf-'+cCurrentDate+'.xlsx', file, 'binary'); // 写入
             ut.showLog('完成生成EXCEL');
         });
     });
