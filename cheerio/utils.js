@@ -153,10 +153,10 @@ exports.isNumber = function (str) {
     let a = parseFloat(str);
 
     if(isNaN(a)){
-        log(str +' is not number '+a);
+        //log(str +' is not number '+a);
         return false;
     }else{
-        log(str +' is  number '+a);
+        //log(str +' is  number '+a);
         return true;
     }
 };
