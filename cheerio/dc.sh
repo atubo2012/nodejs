@@ -135,10 +135,30 @@ node dc_lianjia.js waigang
 node dc_lianjia.js xinchenglu
 node dc_lianjia.js xuxing
 
-node dc_lianjia.js jingan
-node dc_lianjia.js zhabei
-node dc_lianjia.js hongkou
-node dc_lianjia.js qingpu
+#node dc_lianjia.js jingan
+node dc_lianjia.js caojiadu
+node dc_lianjia.js jingansi
+node dc_lianjia.js jiangninglu
+node dc_lianjia.js nanjingxilu
+
+#node dc_lianjia.js zhabei
+node dc_lianjia.js buyecheng
+node dc_lianjia.js daning
+node dc_lianjia.js pengpu
+node dc_lianjia.js xizangbeilu
+node dc_lianjia.js yangcheng
+node dc_lianjia.js yonghe
+node dc_lianjia.js zhabeigongyuan
+
+#node dc_lianjia.js hongkou
+node dc_lianjia.js beiwaitan
+node dc_lianjia.js jiangwanzhen
+node dc_lianjia.js liangcheng
+node dc_lianjia.js linpinglu
+node dc_lianjia.js luxungongyuan
+node dc_lianjia.js quyang
+node dc_lianjia.js sicuanbeilu
+
 #node dc_lianjia.js fengxian
 #node dc_lianjia.js jinshan
 #node dc_lianjia.js chongming
