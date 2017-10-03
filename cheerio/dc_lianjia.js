@@ -52,11 +52,14 @@ main();
  */
 function main (){
     let args = process.argv.splice(2);
+
+    //默认的监听器数量是10，监听器的数量超过10以上则会报错，因此，需要在这里将监听器的上线调整到更大。设置为与最大采集数据的页数相同
+    process.setMaxListeners(config.cMaxListener);
     if(args.length<1){
         console.error('应指定板块或行政区拼音名作为参数，如node dc_lianjia.js pudongxinqu');
     }else{
         console.error('开始采集:'+args[0]);
-        gCurrentUrl = config.cSiteUrl+config.cUrlPrefix+args[0]+config.cUrlPostfix
+        gCurrentUrl = config.cSiteUrl+config.cUrlPrefix+args[0]+config.cUrlPostfix;
         console.log(gCurrentUrl);
         dc();
     }

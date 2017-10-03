@@ -6,6 +6,8 @@ module.exports = {
 
     //数据库参数
     cDburl:'mongodb://100td:27117/test',
+    cMaxListener: 300,  //最大的监听器数量，避免“11 uncaughtException listeners added”报错。
+    cMaxRcd:80000,//dbutil中一次性检索出来的最多的记录数
 
     //数据采集参数
     cSiteUrl : 'http://sh.lianjia.com',
@@ -14,8 +16,8 @@ module.exports = {
     cInitUrl : '/ershoufang/xujiahui/s7', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
 
     //性能参数
-    cDcInterval : 2380, //两次采集之间的时间
-    cMaxPageNum : 3, //采集页面的数量，如果太多可能会造成内存溢出。
+    cDcInterval : 2389, //两次采集之间的时间
+    cMaxPageNum : 100, //采集页面的数量，如果太多可能会造成内存溢出。
 
     cEsfFields:{'bsr':1,
             'cfmd':1,'sized':1,'floord':1,'tpriced':1,

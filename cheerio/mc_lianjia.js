@@ -96,3 +96,6 @@ function genHrAvgPrice(db, callback) {
         callback(result);
     });
 }
+
+//genTodayHr(db,callback)  根据当日的esf生成今日的小区信息
+//
