@@ -40,7 +40,7 @@ function cdc(siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
         http.get(siteUrl + pageUrl, function (res) {
             //let req = http.get(options, function (res) {
 
-            ut.showLog('请求应答' + res.statusCode + '-' + res.statusMessage);
+            //ut.showLog('请求应答' + res.statusCode + '-' + res.statusMessage);
 
             let chunks = [];
             res.on('data', function (data) {
