@@ -22,7 +22,7 @@ exports.save2db =function (tbname,savedData,cDburl) {
             log('完成入库:' + tbname+' ，共入库'+result.result.n+'条。');
             //callback(result);
             db.close();
-            log('已关闭链接。');
+            //log('已关闭链接。');
         });
     });
 };
