@@ -58,7 +58,7 @@ function cdc(siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
                 //接收完本次请求后的全部html数据后解析数据和处理数据
                 let nextPageUrl = htmlPaser(decodedContent, dataProcessor);
                 if (nextPageUrl !== '' && maxPageAmt > 0) {
-                    ut.showLog('下一页url:' + nextPageUrl + ' 。剩余页数=' + maxPageAmt);
+                    //ut.showLog('下一页url:' + nextPageUrl + ' 。剩余页数=' + maxPageAmt);
 
 
                     setTimeout(function () {
