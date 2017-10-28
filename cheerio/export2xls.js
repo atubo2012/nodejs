@@ -31,6 +31,8 @@ function export2xls() {
             ut.showLog('开始组装EXCEL数据');
             for (let i = 0; i < result.length; i++) {
                 let esf = result[i];
+                let hasError = false;//默认记录的值是正常的，如果记录的值有误则捕将该条记录
+
                 //只导出笋值小于阀值的数据和存在异常的数据
                 if(esf['bsr']<=config.bsrLessThen || isNaN(esf['bsr']))
                 {
@@ -42,12 +44,23 @@ function export2xls() {
                     for (let j = 1; j < fieldNameList.length; j++) {
                         let fieldName = fieldNameList[j];
                         if (fieldName === 'bsr') {
-                            esf[fieldName] = esf[fieldName].toFixed(2);
+                            try{
+                                esf[fieldName] = esf[fieldName].toFixed(2);
+                            }
+                            catch(e){
+                                ut.showLog('计算笋度bsr时出错：');
+                                hasError = true;
+                                ut.showLog(e);
+                                ut.showLog(JSON.stringify(esf[fieldName]));
+                                ut.showLog(JSON.stringify(esf));
+                            }
                         }
                         arry.push(esf[fieldName]);
                     }
-                    //将单条房源记录加入到所有记录中
-                    data_content.push(arry);
+                    //只将正确的数据加入到导出数据
+                    if(!hasError) {
+                        data_content.push(arry);
+                    }
                 }
             }
             ut.showLog('完成组装EXCEL数据，关闭DB');
