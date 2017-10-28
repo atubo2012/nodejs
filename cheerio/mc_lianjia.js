@@ -41,31 +41,36 @@ function saveHrAvgPrice() {
                 assert.equal(err, null);
                 assert.equal(circm.insertdt.length, r.result.n); //result包括了result的document
                 assert.equal(circm.insertdt.length, r.ops.length); //ops是包括了_id的document
-                console.log(circm.logmsg + circm.tbnm+' 共'+r.result.n+'条。');
+                cut.showLog(circm.logmsg + circm.tbnm+' 共'+r.result.n+'条。');
 
 
                 ut.showLog('开始更新房源的均价字段');
                 for(let i=0; i<result.length;i++)
                 {
                     let _id = result[i]._id;
-                    let _hrname = _id.substr(0,_id.indexOf('-'));
+                    let _hrname = _id.substr(0,_id.lastIndexOf('-')); //使用lastIndexOf是为了应对小区名字中有减号-，导致esf的hrap未设置成功
                     let _avgPrice = result[i]._avg*10000; //单价更新成元为单位
                     _avgPrice = _avgPrice.toFixed(0); //去除小数点
 
+                    // ut.showLog("1--"+_id);
+                    // ut.showLog("2--"+_hrname);
+                    // ut.showLog("3--"+result[i]._avg);
+                    // ut.showLog("4--"+_avgPrice);
+                    // ut.showLog("5--"+Number(_avgPrice));
 
                     db.collection('esf').updateMany(
                         {'cd':{$eq:today},'hrname':{$eq:_hrname}},//当日小区的均价
                         {$set :{'hrap':Number(_avgPrice)}},
                         function (err,r) {
                             assert.equal(err, null);
-                            ut.showLog('['+_hrname+']挂牌均价=['+_avgPrice+']')
-                        });
+                            ut.showLog(_hrname+'挂牌均价hrap='+_avgPrice);
 
-                    //最后一条结束后则关闭数据库连接
-                    if (i === (result.length - 1)) {
-                        db.close();
-                        ut.showLog('完成更新房源的均价字段，关闭DB');
-                    }
+                            //最后一条结束后则关闭数据库连接
+                            if (i === (result.length - 1)) {
+                                db.close();
+                                ut.showLog('完成更新房源的均价字段，关闭DB');
+                            }
+                        });
                 }
             });
         });
