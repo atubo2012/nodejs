@@ -17,7 +17,7 @@ export dateymd=`date '+%Y%m%d'`
 cd /root/workspace/nodejs/cheerio
 
 #0、清理本地目录中导出的数据文件
-mv  *.xlsx ./data
+mv  ljesf*.xlsx ./data
 mv  *.txt ./data
 
 #1、清理数据库
@@ -32,39 +32,39 @@ echo "采集链家数据......"
 
 echo "计算小区均价....."
 #node dc_lianjia.js minhang
-node dc_lianjia.js chunshen
-node dc_lianjia.js gumei
-node dc_lianjia.js huacao
-node dc_lianjia.js hanghua
-node dc_lianjia.js jinganxincheng
-node dc_lianjia.js jinhui
-node dc_lianjia.js jinhongqiao
-node dc_lianjia.js longbai
-node dc_lianjia.js laominhang
-node dc_lianjia.js meilong
-node dc_lianjia.js maqiao
-node dc_lianjia.js pujiang1
-node dc_lianjia.js qibao
-node dc_lianjia.js wujing
-node dc_lianjia.js shenzhuang
-node dc_lianjia.js zhuanqiao
+#node dc_lianjia.js chunshen
+#node dc_lianjia.js gumei
+#node dc_lianjia.js huacao
+#node dc_lianjia.js hanghua
+#node dc_lianjia.js jinganxincheng
+#node dc_lianjia.js jinhui
+#node dc_lianjia.js jinhongqiao
+#node dc_lianjia.js longbai
+#node dc_lianjia.js laominhang
+#node dc_lianjia.js meilong
+#node dc_lianjia.js maqiao
+#node dc_lianjia.js pujiang1
+#node dc_lianjia.js qibao
+#node dc_lianjia.js wujing
+#node dc_lianjia.js shenzhuang
+#node dc_lianjia.js zhuanqiao
 
 #node dc_lianjia.js baoshan
-node dc_lianjia.js dachang
-node dc_lianjia.js dahua
-node dc_lianjia.js gucun
-node dc_lianjia.js gongfu
-node dc_lianjia.js gaojing
-node dc_lianjia.js gongkang
-node dc_lianjia.js luodian
-node dc_lianjia.js luojing
-node dc_lianjia.js songbao
-node dc_lianjia.js shangda
-node dc_lianjia.js songnan
-node dc_lianjia.js tonghe
-node dc_lianjia.js yanghang
-node dc_lianjia.js yuepu
-node dc_lianjia.js zhangmiao
+#node dc_lianjia.js dachang
+#node dc_lianjia.js dahua
+#node dc_lianjia.js gucun
+#node dc_lianjia.js gongfu
+#node dc_lianjia.js gaojing
+#node dc_lianjia.js gongkang
+#node dc_lianjia.js luodian
+#node dc_lianjia.js luojing
+#node dc_lianjia.js songbao
+#node dc_lianjia.js shangda
+#node dc_lianjia.js songnan
+#node dc_lianjia.js tonghe
+#node dc_lianjia.js yanghang
+#node dc_lianjia.js yuepu
+#node dc_lianjia.js zhangmiao
 
 #node dc_lianjia.js xuhui
 node dc_lianjia.js caohejing
@@ -74,7 +74,7 @@ node dc_lianjia.js huajing
 node dc_lianjia.js hengshanlu
 node dc_lianjia.js jianguoxilu
 node dc_lianjia.js kangjian
-node dc_lianjia.js hualong
+node dc_lianjia.js longhua
 node dc_lianjia.js shanghainanzhan
 node dc_lianjia.js tianlin
 node dc_lianjia.js wantiguan
@@ -164,27 +164,27 @@ node dc_lianjia.js sicuanbeilu
 #node dc_lianjia.js chongming
 
 #node dc_lianjia.js pudongxinqu
-node dc_lianjia.js lujiazui
-node dc_lianjia.js yuanshen
-node dc_lianjia.js huamu
-node dc_lianjia.js weifang
-node dc_lianjia.js tangqiao
-node dc_lianjia.js biyun
-node dc_lianjia.js jinqiao
-node dc_lianjia.js lianyang
-node dc_lianjia.js shibo
-node dc_lianjia.js zhangjiang
-node dc_lianjia.js tangzhen
-node dc_lianjia.js zhuqiao
-node dc_lianjia.js nanmatou
-node dc_lianjia.js sanlin
-node dc_lianjia.js jinyang
-node dc_lianjia.js kangqiao
-node dc_lianjia.js zhoupu
-node dc_lianjia.js lingangxincheng
-node dc_lianjia.js xinchang
-node dc_lianjia.js yangdong
-node dc_lianjia.js xuanqiao
+#node dc_lianjia.js lujiazui
+#node dc_lianjia.js yuanshen
+#node dc_lianjia.js huamu
+#node dc_lianjia.js weifang
+#node dc_lianjia.js tangqiao
+#node dc_lianjia.js biyun
+#node dc_lianjia.js jinqiao
+#node dc_lianjia.js lianyang
+#node dc_lianjia.js shibo
+#node dc_lianjia.js zhangjiang
+#node dc_lianjia.js tangzhen
+#node dc_lianjia.js zhuqiao
+#node dc_lianjia.js nanmatou
+#node dc_lianjia.js sanlin
+#node dc_lianjia.js jinyang
+#node dc_lianjia.js kangqiao
+#node dc_lianjia.js zhoupu
+#node dc_lianjia.js lingangxincheng
+#node dc_lianjia.js xinchang
+#node dc_lianjia.js yangdong
+#node dc_lianjia.js xuanqiao
 
 #node dc_lianjia.js huangpu
 node dc_lianjia.js dongjiadu
@@ -215,9 +215,9 @@ node export2xls.js
 #4、发送邮件给相关人员
 echo "发送邮件......"
 mv ./log/cron.log ./log/cron-$dateymd.log
-mail -s "Sun Report $dateymd" -a *.xlsx sh_3k@126.com <  ./log/cron-$dateymd.log
-mail -s "Sun Report $dateymd" -a *.xlsx 459420202@qq.com < a.msg
-mail -s "Sun Report $dateymd" -a *.xlsx 505304964@qq.com < a.msg
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx sh_3k@126.com <  ./log/cron-$dateymd.log
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 459420202@qq.com < a.msg
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 505304964@qq.com < a.msg
 echo "发送邮件ok"
 
 #cat $dateymd-sr.csv | mail -s "Sun2 Report $dataymd" sh_3k@126.com
