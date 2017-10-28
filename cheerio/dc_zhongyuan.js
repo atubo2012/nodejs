@@ -204,7 +204,7 @@ function esfPaser4zy(html, dataProcessor) {
         let _hrname = dblk[2].children[0].data.trim(); //小区名
         let _hrurl = dblk[2].attribs['href']; //小区链接
 
-        ut.showLog(_title);
+        //ut.showLog(_title);
 
 
         let _layout = dblk[2].next.children[0].data; //房型
@@ -306,7 +306,7 @@ function esfPaser4zy(html, dataProcessor) {
         //ut.showLog(JSON.stringify(esfInfo));
         results.push(esfInfo);
         if (records.length === results.length) {
-            ut.showLog('本页所有记录已经处理完毕，调用数据处理函数，共' + records.length + '条数据。');
+            //ut.showLog('本页所有记录已经处理完毕，调用数据处理函数，共' + records.length + '条数据。');
             dataProcessor(results);
         }
 
@@ -374,7 +374,7 @@ function export2xls(dburl, tbname) {
             ut.showLog('开始组装EXCEL数据' + result.length);
             for (let i = 0; i < result.length; i++) {
                 let esf = result[i];
-                ut.showLog(JSON.stringify(esf));
+                //ut.showLog(JSON.stringify(esf));
 
                 //只导出笋值小于阀值的数据和存在异常的数据
                 if (esf['bsr'] <= cf.bsrLessThen || isNaN(esf['bsr'])) {
@@ -385,8 +385,15 @@ function export2xls(dburl, tbname) {
                     let fieldNameList = Object.keys(cf.cEsfFields2);
                     for (let j = 1; j < fieldNameList.length; j++) {
                         let fieldName = fieldNameList[j];
+                        //if (fieldName === 'bsr' && esf[fieldName]!== null) {
                         if (fieldName === 'bsr') {
-                            esf[fieldName] = esf[fieldName].toFixed(2);
+							if(esf[fieldName]=== null){
+                				ut.showLog('以下笋度值未空，建议排查原因:');
+                				ut.showLog(JSON.stringify(esf));
+							}
+							else{
+								esf[fieldName] = esf[fieldName].toFixed(2);
+							}
                         }
                         arry.push(esf[fieldName]);
                     }
@@ -468,7 +475,7 @@ function setEsfDisct(esfs, db) {
             let disct = getDisctCfm4zy(esf.size, esf.tprice, _bdyear);
 
 
-            ut.showLog(_title + '-折扣:' + JSON.stringify(disct));
+            //ut.showLog(_title + '-折扣:' + JSON.stringify(disct));
 
             let col = db.collection('zyesf');
             col.updateMany(
@@ -476,7 +483,7 @@ function setEsfDisct(esfs, db) {
                 {$set: disct},
                 function (err, r) {
                     assert.equal(err, null);
-                    ut.showLog(_title + '-折扣:' + JSON.stringify(disct) + '-' + JSON.stringify(r));
+                    //ut.showLog(_title + '-折扣:' + JSON.stringify(disct) + '-' + JSON.stringify(r));
                     //最后一条记录处理完毕后关闭连接
                     if (i === esfs.length - 1) {
                         ut.showLog('已完全部二手房折扣率计算，关闭数据库连接。');
