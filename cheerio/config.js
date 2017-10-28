@@ -5,7 +5,7 @@
 module.exports = {
 
     //数据库参数
-    cDburl:'mongodb://100td:27117/test',
+    cDburl:'mongodb://100td:27117/pspdb',
     cMaxListener: 300,  //最大的监听器数量，避免“11 uncaughtException listeners added”报错。
     cMaxRcd:80000,//dbutil中一次性检索出来的最多的记录数
 
