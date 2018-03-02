@@ -41,7 +41,7 @@ function saveHrAvgPrice() {
                 assert.equal(err, null);
                 assert.equal(circm.insertdt.length, r.result.n); //result包括了result的document
                 assert.equal(circm.insertdt.length, r.ops.length); //ops是包括了_id的document
-                cut.showLog(circm.logmsg + circm.tbnm+' 共'+r.result.n+'条。');
+                ut.showLog(circm.logmsg + circm.tbnm+' 共'+r.result.n+'条。');
 
 
                 ut.showLog('开始更新房源的均价字段');

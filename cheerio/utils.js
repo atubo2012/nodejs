@@ -43,6 +43,66 @@ function fmd(date, style) {
  * @param tprice 总价（单位万） 数值型
  * @param bdyear 建造年份 4位数值型
  */
+
+exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
+
+    let sizeDisct = 1;
+    if(size>150 && size<=200){
+        sizeDisct = 0.9;
+    }else if(size>200){
+        sizeDisct = 0.8;
+    }
+    //console.log(size+'平米:'+sizeDisct*10+'折');
+
+    let tpriceDisct = 1;
+    if(tprice>1000 && tprice<=2000){
+        tpriceDisct = 0.9;
+    }else if(tprice>2000){
+        tpriceDisct = 0.8;
+    }
+    //console.log(tprice+'万:'+tpriceDisct*10+'折');
+
+    let floorDisct = 1;  //默认的楼层折扣
+    let bdyearDisct = 1; //默认的建设年份折扣
+    let level = 0;
+    let floortype = '';
+
+
+    if(floor.indexOf('(')>=0)
+    {
+        level = floor.substring(floor.indexOf('共')+1,floor.indexOf('层)'));
+        if(level.valueOf()>=8)
+        {
+            floortype = '高层';
+            if(floor.indexOf('低楼层')>=0){
+                floorDisct = 0.85;
+            }
+        }else{
+            floortype = '多层';
+            if(floor.indexOf('高楼层')>=0 || floor.indexOf('低楼层')>=0){
+                floorDisct = 0.9;
+            }
+        }
+    }else{
+        floortype = '别墅';
+    }
+
+    //bdyear = bdyear.replace('|','').replace('年建','');
+    if(Number(bdyear)<1990)
+    {
+        bdyearDisct = 0.9;
+    }else if(Number(bdyear)<1998){
+        bdyearDisct = 0.95;
+    }
+
+    let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)*bdyearDisct.toFixed(2)).toFixed(3);
+    cfmd =Math.round(cfmd *100)/100; //最低折扣
+    //console.log(floortype+'-'+floor+':'+floorDisct*10+'折');
+    //console.log('核定折扣:'+cfmd);
+    return {'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'bdyeard':bdyearDisct,'cfmd':cfmd};
+
+};
+
 exports.getCfmDisct = function(size,floor,tprice,bdyear){
 
     let sizeDisct = 1;
@@ -159,6 +219,30 @@ exports.isNumber = function (str) {
         //log(str +' is  number '+a);
         return true;
     }
+};
+
+/**
+ * 检查某个对象是否有元素
+ * hasElmt(obj.aa)，如有该对象则返回真。
+ * @param obj
+ * @returns {boolean}
+ */
+exports.hasElmt = function (obj) {
+    return (typeof(obj) !== 'undefined') ;
+};
+
+/**
+ * 向文件中写入指定的的内容
+ * @param filename
+ * @param content
+ */
+exports.wf = function (filename,content) {
+    let fs = require('fs');
+    fs.writeFile(filename, content,  function(err) {
+        if (err) {
+            return console.error('写入文件时发生错误',err);
+        }
+    });
 };
 
 

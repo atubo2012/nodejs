@@ -13,11 +13,19 @@
  * 4、要确保在浏览器中可以访问的url链接，才能作为参数传入。不同网站的url略有不同，以中原为例，url需要以/结尾。
  */
 exports.dc = function (siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
-    cdc(siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt);
+    collectData('http',siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt);
 };
 
-function cdc(siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
+exports.dcs = function (siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
+    collectData('https',siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt);
+};
 
+function collectData(protocal,siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
+
+    if(protocal!=='http' && protocal!=='https'){
+        console.error(protocal+'不是合法的协议名，正确的协议名应是http或https，请更正协议名后再试！');
+        return;
+    }
     let options = {
         hostname: 'sh.centanet.com',
         port: 80, //端口号 https默认端口 443， http默认的端口号是80
@@ -28,10 +36,10 @@ function cdc(siteUrl, pageUrl, htmlPaser, dataProcessor, maxPageAmt) {
             "Content-Length": 118,//siteUrl.concat(pageUrl).length,
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
-        }//伪造请求头
+        }//模拟请求头
     };
     let ut = require('./utils.js');
-    let http = require('http');
+    let http = require(protocal);
     let iconv = require('iconv-lite');
     let cf = require('./config.js');
 
