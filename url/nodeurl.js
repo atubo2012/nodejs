@@ -29,6 +29,7 @@ function doPost(req, res) {
     //收到end时，将收到的数据解析
     req.on('end', function () {
         var obj = querystr.parse(formData)
+        console.log('============1');
         console.log(obj);
         res.end();
     })
@@ -39,7 +40,8 @@ function doGet(req, res) {
     console.log('in doGet:' + req.url);
 
     //获得请求链接中的查询参数
-    var urlObj = querystr.parse(url.parse(req.url).query);
+    var urlObj = querystr.parse(url.parse(req.url).query)
+    console.log('============2');
     console.log(urlObj);
     console.log(req.toString());
 
