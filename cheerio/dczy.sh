@@ -1,6 +1,6 @@
 export dateymd=`date '+%Y%m%d'`
 export LANG=en_US.UTF-8
-export PATH=$PATH:/usr/bin/node
+export PATH=$PATH:/root/download/node-v6.11.0-linux-x64/bin
 cd /root/workspace/nodejs/cheerio
 
 mv  zyesf*.xlsx ./data
@@ -202,4 +202,4 @@ mail -s "Sun Report zy" -a zyesf-$dateymd.xlsx sh_3k@126.com <  a.msg
 mail -s "Sun Report zy" -a zyesf-$dateymd.xlsx 459420202@qq.com < a.msg
 mail -s "Sun Report zy" -a zyesf-$dateymd*.xlsx 505304964@qq.com < a.msg
 
-cp log/zycron.log log/zycron-$dataymd.log
+cp log/zycron.log log/zycron-$dateymd.log
