@@ -12,11 +12,12 @@ module.exports = {
     //数据采集参数
     cSiteUrl : 'https://sh.lianjia.com',
     cUrlPrefix:'/ershoufang/',
-    cUrlPostfix:'/s7/',
-    cInitUrl : '/ershoufang/xujiahui/s7/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
+    cUrlPostfix:'/co32/',
+    cInitUrl : '/ershoufang/taopu/co32/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
+
 
     //性能参数
-    cDcInterval : 2389, //两次采集之间的时间
+    cDcInterval : 10000, //两次采集之间的时间
     cMaxPageNum : 100, //采集页面的数量，如果太多可能会造成内存溢出。
 
     cEsfFields:{'bsr':1,

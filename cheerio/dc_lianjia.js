@@ -40,6 +40,7 @@ let gCurrentUrl = cInitUrl; //当前页为初始页
 let gNextPageUrl = '';      //"下一页"的url，根据该字段的值判断是否继续遍历下一页。
 let gCurrentPageNum = 1;    //初始的页面序号为1
 let gParsedData = [];       //解析后的全部结果
+let totalPage =0;
 
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd'); //当前日期，入库标准字段。
 
@@ -56,7 +57,7 @@ function main() {
     if (args.length < 1) {
         console.error('应指定板块或行政区拼音名作为参数，如node dc_lianjia.js pudongxinqu');
         //gCurrentUrl = 'https://sh.lianjia.com/ershoufang/c5011000012622/';
-        gCurrentUrl = 'https://sh.lianjia.com/ershoufang/buyecheng/';
+        gCurrentUrl = cInitUrl;//测试专用
         dc();
     } else {
         console.error('开始采集:' + args[0]);
@@ -255,7 +256,8 @@ function parseEsf2(html) {
 
     ut.wf('content.html',html);
     let _nowtime = ut.formatDate(new Date(), 'hhmmss');
-    ut.showLog('正在解析第' + gCurrentPageNum + '页html');
+
+    ut.showLog('正在解析第：' + gCurrentPageNum + '/'+totalPage+'页');
 
     //加载页面内容
     let $ = cheerio.load(html);
@@ -288,21 +290,31 @@ function parseEsf2(html) {
         let _url = $('a', dblk).attr('href');//url
 
 
+        let _type = '';
+        let _layout = '';
+        let startIndex= 1;
         dblk = esf.find('.houseInfo');
         tmp = dblk.text().split('|');
-        let _layout = tmp[1].trim(); //房型
-        let _size = Number(tmp[2].trim().replace('平米', '')); //面积
-        let _drct = tmp[3]; //朝向，有可能为空
+
+        //别墅房型的信息列：复地太阳城 | 联排别墅 | 4室3厅 | 179.74平米 | 南 | 简装 | 无电梯
+        if(tmp[startIndex].trim().indexOf('别墅')>=0){
+            _type = tmp[startIndex++].trim();
+        }
+
+        //非别墅房型的新系列：华松小区 | 2室1厅 | 59.6平米 | 南 | 简装 | 无电梯
+        _layout = tmp[startIndex++].trim(); //房型
+        let _size = Number(tmp[startIndex++].trim().replace('平米', '')); //面积
+        let _drct = tmp[startIndex++]; //朝向，有可能为空
         if (undefined === _drct) {
             _drct = '[未填]';
         } else {
             _drct = _drct.trim();
         }
-        let _deco = tmp[4]; //装修
+        let _deco = tmp[startIndex]; //装修
 
         let _elvt = '';     //电梯，有可能为空
         if (tmp.length < 6) {
-            console.log('数据项少于6 :'+tmp.length,tmp,_url);
+            //console.log('数据项少于6 :'+tmp.length,tmp,_url);
         } else {
             _elvt = tmp[5];//电梯
         }
@@ -319,7 +331,7 @@ function parseEsf2(html) {
 
         let _floor = '';
         let _bdyear = '[未填]';
-        let _type = '';
+
 
         if(_layout.indexOf('别墅')>=0){
             _floor = pt1.substring(0,pt1.indexOf('层')+1);
@@ -354,7 +366,7 @@ function parseEsf2(html) {
 
         let _tags = [];
         dblk = esf.find('.tag').find('span');
-        dblk.length === 0 ? console.log('notag:',_url) : '';
+        //dblk.length === 0 ? console.log('notag:',_url) : '';
         dblk.each(function () {
             let _tag = $(this);
             let key = _tag.attr('class');
@@ -412,22 +424,23 @@ function parseEsf2(html) {
         gParsedData.push(esfInfo);
     });
 
-
     //如果最后一个翻页链接是“下一页”，则设置下一页的URL，为下次遍历做好参数准备
     let dblk = $('.house-lst-page-box');
     try {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
-        let nextPageUrl = dblk.attr('page-url');
-        let totalPage = Number(pageInfo.totalPage);
+        totalPage = Number(pageInfo.totalPage);
         let curPage = Number(pageInfo.curPage);
         if(curPage<totalPage){
+            let nextPageUrl = dblk.attr('page-url');
             gNextPageUrl = config.cSiteUrl+nextPageUrl.replace('{page}',curPage+1);
             gCurrentPageNum++;
         }else{
             gNextPageUrl = '';
         }
     }catch(e){
-        console.log('翻页信息解析错误',e);
+        console.log('翻页信息解析错误',e,dblk,gCurrentUrl);
+        ut.wf(ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);
+        //process.exit(0);
     }
     let a='1';//调试锚点，在此终端，便于观察上述变量的值
 
