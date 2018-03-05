@@ -26,7 +26,7 @@ mv  *.txt ./data
 
 #2、采集数据
 #python3 spider.py get_district_house sh $distname  >> ./log/$distname.log
-echo "采集链家数据......"
+echo "采集数据......"
 
 
 
@@ -214,6 +214,7 @@ node export2xls.js
 #4、发送邮件给相关人员
 echo "发送邮件......"
 mv ./log/cron.log ./log/cron-$dateymd.log
+mv *.html ./log
 mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx sh_3k@126.com <  ./log/cron-$dateymd.log
 mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 459420202@qq.com < a.msg
 mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 505304964@qq.com < a.msg
