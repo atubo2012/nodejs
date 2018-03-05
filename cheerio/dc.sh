@@ -50,7 +50,7 @@ node dc_lianjia.js shenzhuang
 node dc_lianjia.js zhuanqiao
 
 #node dc_lianjia.js baoshan
-node dc_lianjia.js dachang
+node dc_lianjia.js dachangzhen
 node dc_lianjia.js dahua
 node dc_lianjia.js gucun
 node dc_lianjia.js gongfu
@@ -215,9 +215,7 @@ node export2xls.js
 echo "发送邮件......"
 mv ./log/cron.log ./log/cron-$dateymd.log
 mv *.html ./log
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx sh_3k@126.com <  ./log/cron-$dateymd.log
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 459420202@qq.com < a.msg
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx 505304964@qq.com < a.msg
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu01 <  ./log/cron-$dateymd.log
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu02 < a.msg
+mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu03 < a.msg
 echo "发送邮件ok"
-
-#cat $dateymd-sr.csv | mail -s "Sun2 Report $dataymd" sh_3k@126.com
