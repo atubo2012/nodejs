@@ -439,7 +439,7 @@ function parseEsf2(html) {
         }
     }catch(e){
         console.log('翻页信息解析错误',e,dblk,gCurrentUrl);
-        ut.wf(ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);
+        ut.wf(ut.getToday()+ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);       //dc.sh中，应在程序结束前将.html复制到log目录中
         //process.exit(0);
     }
     let a='1';//调试锚点，在此终端，便于观察上述变量的值

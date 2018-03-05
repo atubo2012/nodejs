@@ -1,10 +1,10 @@
 
-del ljesf*xlsx
+del ljesf*xlsx *.html
 
-echo db.esf.remove({}) | mongo 100td:27117/test
-echo db.hrhis.remove({}) | mongo 100td:27117/test
+rem echo "db.esf.remove({}) " | mongo 100td:27117/test
+rem echo db.hrhis.remove({}) | mongo 100td:27117/test
 
-rem 执行本测试程序前，请先清理数据库，选取数据量较少的板块测试板块，如北外滩为
+rem 执行本测试程序前，请先清理数据库，选取数据量较少的板块测试板块，如不夜城
 
 node dc_lianjia.js buyecheng
 node dc_lianjia.js daning
@@ -103,9 +103,9 @@ node dc_lianjia.js zhiwuyuan
 node mc_lianjia.js
 node export2xls.js
 
+
+
 rem dc_zhongyuan.bat
-
-
 rem node dc_zhongyuan.js dchr beiwaitan
 rem node dc_zhongyuan.js dcesf beiwaitan
 rem node dc_zhongyuan.js setap
