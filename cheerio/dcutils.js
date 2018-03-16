@@ -71,7 +71,7 @@ function collectData(protocal,siteUrl, pageUrl, htmlPaser, dataProcessor, maxPag
 
                     setTimeout(function () {
                         //此处采用函数递归调用，也可以考虑启动单独的进程调用。
-                        cdc(siteUrl, nextPageUrl, htmlPaser, dataProcessor, maxPageAmt);
+                        collectData(protocal,siteUrl, nextPageUrl, htmlPaser, dataProcessor, maxPageAmt);
                     }, cf.cDcInterval);
 
                 } else {

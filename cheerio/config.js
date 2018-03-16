@@ -5,7 +5,8 @@
 module.exports = {
 
     //数据库参数
-    cDburl:'mongodb://100td:27117/pspdb',
+    //cDburl:'mongodb://100td:27117/pspdb',
+    cDburl:'mongodb://100td:27117/test2',
     cMaxListener: 300,  //最大的监听器数量，避免“11 uncaughtException listeners added”报错。
     cMaxRcd:80000,//dbutil中一次性检索出来的最多的记录数
 
@@ -13,7 +14,7 @@ module.exports = {
     cSiteUrl : 'https://sh.lianjia.com',
     cUrlPrefix:'/ershoufang/',
     cUrlPostfix:'/co32/',
-    cInitUrl : '/ershoufang/taopu/co32/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
+    cInitUrl : '/ershoufang/jinqiao/co32/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
 
 
     //性能参数
@@ -59,5 +60,6 @@ module.exports = {
     },
     cEsfSortBy2:{bsr:1},
     bsrLessThen: 0.98
+    dcNewOnly:false,     //是否只导出新上架的记录
 
 };
