@@ -41,6 +41,7 @@ let gNextPageUrl = '';      //"下一页"的url，根据该字段的值判断是
 let gCurrentPageNum = 1;    //初始的页面序号为1
 let gParsedData = [];       //解析后的全部结果
 let totalPage =0;
+let ghasMoreNew = true;     //默认情况下，有更多的新纪录
 
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd'); //当前日期，入库标准字段。
 
@@ -57,6 +58,7 @@ function main() {
     if (args.length < 1) {
         console.error('应指定板块或行政区拼音名作为参数，如node dc_lianjia.js pudongxinqu');
         //gCurrentUrl = 'https://sh.lianjia.com/ershoufang/c5011000012622/';
+        //gCurrentUrl = 'https://cq.lianjia.com/ershoufang/fengtianlu/co32/';
         gCurrentUrl = cInitUrl;//测试专用
         dc();
     } else {
@@ -95,6 +97,11 @@ function dc() {
                 //接收完全部数据后解析数据
                 parseEsf2(decodedContent);
 
+                //如果已经没有新上盘，则将下一页url设置为空，不继续翻页
+                if(config.dcNewOnly && !ghasMoreNew)
+                    gNextPageUrl='';
+
+                //如果下一页的url有内容，且当前页码小于最大页码，则继续采集下一页
                 if ('' !== gNextPageUrl && gCurrentPageNum <= cMaxPageNum) {
                     setTimeout(function () {
 
@@ -289,6 +296,15 @@ function parseEsf2(html) {
         let _title = dblk.text(); //标题
         let _url = $('a', dblk).attr('href');//url
 
+        let _isNew = $('span.new.tagBlock', dblk).text();
+        _isNew = (_isNew==='新上') ? _isNew:'';
+
+
+        //如果配置文件中约定只采集新盘，当前记录不是新上，则退出。
+        if(config.dcNewOnly && _isNew!=='新上'){
+            ghasMoreNew = false;
+            return;
+        }
 
         let _type = '';
         let _layout = '';
@@ -400,6 +416,7 @@ function parseEsf2(html) {
             layout: _layout,    //户型
             drct: _drct,        //朝向
             elvt: _elvt,        //电梯
+            isnew:_isNew,       //是否为新楼盘
             type: _type,        //建筑类别
             zone: _zone,         //板块
             sdist: _dist,        //行政区
@@ -439,7 +456,7 @@ function parseEsf2(html) {
         }
     }catch(e){
         console.log('翻页信息解析错误',e,dblk,gCurrentUrl);
-        ut.wf(ut.getToday()+ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);       //dc.sh中，应在程序结束前将.html复制到log目录中
+        ut.wf(ut.getToday()+'-'+ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);       //dc.sh中，应在程序结束前将.html移动到log目录中
         //process.exit(0);
     }
     let a='1';//调试锚点，在此终端，便于观察上述变量的值

@@ -5,7 +5,7 @@
 module.exports = {
 
     //数据库参数
-    cDburl:'mongodb://100td:27117/test',
+    cDburl:'mongodb://100td:27117/test2',
     cMaxListener: 300,  //最大的监听器数量，避免“11 uncaughtException listeners added”报错。
     cMaxRcd:80000,//dbutil中一次性检索出来的最多的记录数
 
@@ -13,11 +13,11 @@ module.exports = {
     cSiteUrl : 'https://sh.lianjia.com',
     cUrlPrefix:'/ershoufang/',
     cUrlPostfix:'/co32/',
-    cInitUrl : '/ershoufang/taopu/co32/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
+    cInitUrl : '/ershoufang/jinqiao/co32/', //以特定板块为入口，查询版块内的房源单价升序查询，只查前60个单价最低的。
 
 
     //性能参数
-    cDcInterval : 10000, //两次采集之间的时间
+    cDcInterval : 5000, //两次采集之间的时间
     cMaxPageNum : 100, //采集页面的数量，如果太多可能会造成内存溢出。
 
     cEsfFields:{'bsr':1,
@@ -58,6 +58,7 @@ module.exports = {
         url:1
     },
     cEsfSortBy2:{bsr:1},
-    bsrLessThen: 0.95
+    bsrLessThen: 0.95,  //笋盘被筛选导出时筛选的笋度阀值
+    dcNewOnly:false,     //是否只导出新上架的记录
 
 };

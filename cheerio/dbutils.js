@@ -10,7 +10,7 @@ let assert = require('assert');
  */
 exports.save2db =function (tbname,savedData,cDburl) {
     let log = require('./utils').showLog;
-    //log('开始入库:'+tbname+':'+JSON.stringify(savedData));
+
     MongoClient.connect(cDburl,function (err,db) {
         assert.equal(err,null);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
 
@@ -24,6 +24,43 @@ exports.save2db =function (tbname,savedData,cDburl) {
             db.close();
             //log('已关闭链接。');
         });
+    });
+};
+
+exports.save2db2 =function (tbname,savedData,cDburl) {
+    let log = require('./utils').showLog;
+    //log('开始入库:'+tbname+':'+JSON.stringify(savedData));
+    MongoClient.connect(cDburl,function (err,db) {
+        assert.equal(err,null);    //assert.equal(actual, expected, [message])，当actual和expected不相等时才输出message
+
+        let coll = db.collection(tbname);
+        let t = require('assert');
+
+        //在try内遍历数据，并用updateOne+upsert方式入库TODO:
+        try{
+            for(let i =0 ;i<savedData.length;i++){
+                let record = savedData[i];
+
+                coll.updateOne(
+                    {'url': record.url},                   //filter
+                    {$set: record, $currentDate: {'updt': true}}, //update
+                    {upsert: true, w: 1},                   //option
+                    function (err, r) {                     //callback
+                        t.equal(null, err);
+                        t.equal(1, r.result.n);
+                        //console.log('更新二手房信息', record.title);
+
+                        db.close();
+                    });
+
+                if(i===savedData.length-1){
+                    db.close();
+                }
+            }
+        }catch(e){
+            console.log('插入二手房信息错误',e);
+            db.close();
+        }
     });
 };
 
@@ -56,9 +93,11 @@ exports.findFromDb =function (tbname,where,limit,cDburl,callback) {
             assert.equal(null, err);
             //assert.equal(limit, docs.length);
 
-            callback(docs,db);
+            console.log(tbname+'======',docs.length);
 
             db.close();
+
+            callback(docs,db);
 
         });
 
