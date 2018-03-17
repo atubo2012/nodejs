@@ -11,10 +11,10 @@ let gDsName = 'ljcq';
 let gSiteUrl = 'https://cq.lianjia.com';
 let zone = 'zhaomushan';
 
-let gCurrentPageNum  = 0;
+let gCurrentPageNum = 0;
 let gNextPageUrl = '';
 let ghasMoreNew = true;
-let gTotalPage =0;
+let gTotalPage = 0;
 
 let gParsedData = [];       //解析后的全部结果
 let gHrPageAmt = 0;
@@ -57,13 +57,13 @@ function main() {
 
             ut.showLog('开始设置二手房的均价......');
 
-            dbut.findFromDb(gDsName+'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
+            dbut.findFromDb(gDsName + 'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
 
         } else if ('mccfmd' === _instruct) {
 
             ut.showLog('开始计算二手房的折扣率......');
 
-            dbut.findFromDb(gDsName+'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
+            dbut.findFromDb(gDsName + 'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
 
         } else if ('expdata' === _instruct) {
 
@@ -76,8 +76,6 @@ function main() {
         }
 
     }
-
-
 
 
     /**
@@ -134,13 +132,12 @@ function zonePaser(html, dataProcessor) {
         dblk = zone.find('div.totalPrice').find('span'); //通过查找两个标签来定位属性。
         let _uprice = dblk.text(); //小区均价
 
-        _uprice = ('暂无'===_uprice) ? 0:Number(_uprice);
+        _uprice = ('暂无' === _uprice) ? 0 : Number(_uprice);
 
 
         dblk = zone.find('a.totalSellCount');
         let _saleAmt = dblk.find('span').text();
         let _esfUrl = dblk.attr('href');
-
 
 
         // let _esfAmt = '0套';
@@ -162,7 +159,7 @@ function zonePaser(html, dataProcessor) {
             uprice: _uprice,    //均价
             sellamt: _sellAmt,  //已售数量
             rentamt: _rentAmt,  //在租数量
-            saleamt:_saleAmt,   //在售数量
+            saleamt: _saleAmt,   //在售数量
             dist: _dist,
             zone: _zone,         //板块
             bdyear: _bdyear,    //房屋建设年份
@@ -181,21 +178,21 @@ function zonePaser(html, dataProcessor) {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
         gTotalPage = Number(pageInfo.totalPage);
         let curPage = Number(pageInfo.curPage);
-        console.log(curPage+'/'+gTotalPage);
+        console.log(curPage + '/' + gTotalPage);
 
-        if(curPage<gTotalPage){
+        if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            nextPageUrl = temp.replace('{page}',curPage+1);
+            nextPageUrl = temp.replace('{page}', curPage + 1);
             gCurrentPageNum++;
-        }else{
+        } else {
             nextPageUrl = '';
         }
-    }catch(e){
-        console.log('翻页信息解析错误',e,dblk);
-        ut.wf(ut.getToday()+'-'+ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);       //dc.sh中，应在程序结束前将.html移动到log目录中
+    } catch (e) {
+        console.log('翻页信息解析错误', e, dblk);
+        ut.wf(ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
         //process.exit(0);
     }
-    let a='1';//调试锚点，在此终端，便于观察上述变量的值
+    let a = '1';//调试锚点，在此终端，便于观察上述变量的值
 
     // if (dblk.length !== 0) {
     //     nextPageUrl = dblk[0].attribs['href']; //下一页的url
@@ -223,7 +220,7 @@ function esfPaser(html, dataProcessor) {
 
 
     let results = [];//对数据解析后的内容
-    ut.wf('content-cq.html',html);
+    ut.wf('content-cq.html', html);
     let _nowtime = ut.formatDate(new Date(), 'hhmmss');
 
 
@@ -255,23 +252,23 @@ function esfPaser(html, dataProcessor) {
         let _url = $('a', dblk).attr('href');//url
 
         let _isNew = $('span.new.tagBlock', dblk).text();
-        _isNew = (_isNew==='新上') ? _isNew:'';
+        _isNew = (_isNew === '新上') ? _isNew : '';
 
 
         //如果配置文件中约定只采集新盘，当前记录不是新上，则退出。
-        if(cf.dcNewOnly && _isNew!=='新上'){
+        if (cf.dcNewOnly && _isNew !== '新上') {
             ghasMoreNew = false;
             return;
         }
 
         let _type = '';
         let _layout = '';
-        let startIndex= 1;
+        let startIndex = 1;
         dblk = esf.find('.houseInfo');
         tmp = dblk.text().split('|');
 
         //别墅房型的信息列：复地太阳城 | 联排别墅 | 4室3厅 | 179.74平米 | 南 | 简装 | 无电梯
-        if(tmp[startIndex].trim().indexOf('别墅')>=0){
+        if (tmp[startIndex].trim().indexOf('别墅') >= 0) {
             _type = tmp[startIndex++].trim();
         }
 
@@ -307,28 +304,27 @@ function esfPaser(html, dataProcessor) {
         let _bdyear = '[未填]';
 
 
-        if(_layout.indexOf('别墅')>=0){
-            _floor = pt1.substring(0,pt1.indexOf('层')+1);
-            if(pt1.indexOf('年建')>=0){
+        if (_layout.indexOf('别墅') >= 0) {
+            _floor = pt1.substring(0, pt1.indexOf('层') + 1);
+            if (pt1.indexOf('年建') >= 0) {
                 _bdyear = pt1.substring(pt1.indexOf('层') + 1, pt1.indexOf('年建'));
                 _type = pt1.substring(pt1.indexOf('建') + 1);
-            }else{
-                _type = pt1.substring(pt1.indexOf('层')+1);
+            } else {
+                _type = pt1.substring(pt1.indexOf('层') + 1);
             }
-        }else{
+        } else {
             _floor = pt1.substring(0, pt1.indexOf(')') + 1); //楼层
-            if(pt1.indexOf('年建')>=0){
+            if (pt1.indexOf('年建') >= 0) {
                 _bdyear = pt1.substring(pt1.indexOf(')') + 1, pt1.indexOf('年建'));
                 _type = pt1.substring(pt1.indexOf('建') + 1);
-            }else{
-                _type = pt1.substring(pt1.indexOf(')')+1);
+            } else {
+                _type = pt1.substring(pt1.indexOf(')') + 1);
             }
         }
 
 
-
         let _zone = tmp[1].trim();
-        let _zoneurl = $('a',dblk).attr('href');
+        let _zoneurl = $('a', dblk).attr('href');
 
 
         dblk = esf.find('.followInfo');
@@ -367,17 +363,17 @@ function esfPaser(html, dataProcessor) {
             hrname: _hrname,    //小区名
             favamt: _favAmt,    //关注人数
             seeamt: _seeAmt,    //带看次数
-            asktime:_askTime,   //挂牌时间
-            deco:   _deco,      //装修
+            asktime: _askTime,   //挂牌时间
+            deco: _deco,      //装修
             floor: _floor,      //楼层
             layout: _layout,    //户型
             drct: _drct,        //朝向
             elvt: _elvt,        //电梯
-            isnew:_isNew,       //是否为新楼盘
+            isnew: _isNew,       //是否为新楼盘
             type: _type,        //建筑类别
             zone: _zone,         //板块
             sdist: _dist,        //行政区
-            disturl:_disturl,   //行政区url
+            disturl: _disturl,   //行政区url
             tags: _tags,         //地铁距离、年限
             size: _size,         //面积
             bdyear: _bdyear,    //房屋建设年份
@@ -408,24 +404,24 @@ function esfPaser(html, dataProcessor) {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
         gTotalPage = Number(pageInfo.totalPage);
         let curPage = Number(pageInfo.curPage);
-        console.log(curPage+'/'+gTotalPage);
-        if(curPage<gTotalPage){
+        console.log(curPage + '/' + gTotalPage);
+        if (curPage < gTotalPage) {
             let nextPageUrl = dblk.attr('page-url');
-            gNextPageUrl = nextPageUrl.replace('{page}',curPage+1);
+            gNextPageUrl = nextPageUrl.replace('{page}', curPage + 1);
             gCurrentPageNum++;
-        }else{
+        } else {
             gNextPageUrl = '';
         }
-    }catch(e){
-        console.log('翻页信息解析错误',e,dblk,gNextPageUrl);
-        ut.wf(ut.getToday()+'-'+ut.getNow()+'.html',JSON.stringify(e)+'\n'+html);       //dc.sh中，应在程序结束前将.html移动到log目录中
+    } catch (e) {
+        console.log('翻页信息解析错误', e, dblk, gNextPageUrl);
+        ut.wf(ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
         setTimeout(function () {
             //此处采用函数递归调用，也可以考虑启动单独的进程调用。
             console.log('休息一会.....');
         }, 10000);
 
     }
-    let a='1';//调试锚点，在此终端，便于观察上述变量的值
+    let a = '1';//调试锚点，在此终端，便于观察上述变量的值
 
     return gNextPageUrl;
 
@@ -449,7 +445,7 @@ function saveBsEsfFromHr(esfs) {
         esfInfo = Object.assign(esfInfo, cfmDisct);
         bsEsf.push(esfInfo);
     }
-    dbut.save2db(gDsName+'esf', bsEsf, cf.cDburl);//保存当前的一个小区信息到库中
+    dbut.save2db(gDsName + 'esf', bsEsf, cf.cDburl);//保存当前的一个小区信息到库中
 
 }
 
@@ -459,11 +455,11 @@ function saveBsEsfFromHr(esfs) {
  * @param hrs
  */
 function zoneDp(hrs) {
-    dbut.save2db(gDsName+'zone', hrs, cf.cDburl);
+    dbut.save2db(gDsName + 'zone', hrs, cf.cDburl);
 }
 
 function esfDp(esfs) {
-    dbut.save2db2(gDsName+'esf', esfs, cf.cDburl);
+    dbut.save2db2(gDsName + 'esf', esfs, cf.cDburl);
 }
 
 function export2xls(dburl, tbname) {
@@ -495,11 +491,11 @@ function export2xls(dburl, tbname) {
                         let fieldName = fieldNameList[j];
                         //if (fieldName === 'bsr' && esf[fieldName]!== null) {
                         if (fieldName === 'bsr') {
-                            if(esf[fieldName]=== null){
+                            if (esf[fieldName] === null) {
                                 ut.showLog('以下笋度值未空，建议排查原因:');
                                 ut.showLog(JSON.stringify(esf));
                             }
-                            else{
+                            else {
                                 esf[fieldName] = esf[fieldName].toFixed(2);
                             }
                         }
@@ -510,7 +506,7 @@ function export2xls(dburl, tbname) {
                 }
 
                 if (i === result.length - 1) {
-                    ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday() );
+                    ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday());
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
@@ -580,7 +576,7 @@ function setEsfDisct(esfs, db) {
                 _bdyear = 9999;
             let disct = getDisctCfm(esf.size, esf.tprice, _bdyear);
 
-            let col = db.collection(gDsName+'esf');
+            let col = db.collection(gDsName + 'esf');
             col.updateMany(
                 {'cd': {$eq: ut.getToday()}, 'url': {$eq: _url}},//当日小区的均价
                 {$set: disct},
@@ -594,7 +590,7 @@ function setEsfDisct(esfs, db) {
                         db.close();
                     }
                 });
-            ut.showLog(esf.title+'-折扣率信息将被设置');
+            ut.showLog(esf.title + '-折扣率信息将被设置');
         }
     });
 }
@@ -701,28 +697,34 @@ function setEsfAvgPrice(hrs, db) {
     let assert = require('assert');
     let today = ut.formatDate(new Date(), 'yyyyMMdd');
 
-    ut.showLog('遍历' + hrs.length + '个小区，为小区内的二手房设置均价。');
-    for (let i = 0; i <= hrs.length - 1; i++) {
+    let MongoClient = require('mongodb').MongoClient;
+    MongoClient.connect(cf.cDburl, function (err, db) {
+        ut.showLog('遍历' + hrs.length + '个小区，为小区内的二手房设置均价。');
 
-        let _hrname = hrs[i].hrname;
-        let _hrurl = hrs[i].url;
-        let _avgPrice = hrs[i].uprice;
-        let col = db.collection(gDsName+'esf');
+        for (let i = 0; i <= hrs.length - 1; i++) {
 
-        col.updateMany(
-            {'cd': {$eq: today}, 'hrurl': {$eq: _hrurl}},//当日小区的均价
-            {$set: {'hrap': _avgPrice}},
-            function (err, r) {
-                assert.equal(err, null);
-                ut.showLog(_hrname + '-内的房源hrap被更新:' + JSON.stringify(r));
-            });
+            let _hrname = hrs[i].hrname;
+            let _hrurl = hrs[i].url;
+            let _avgPrice = hrs[i].uprice;
 
-        //最后一条记录处理完毕后关闭连接
-        if (i === hrs.length - 1) {
-            ut.showLog('已完成全部小区的二手房hrap更新。');
-            db.close();
+            let col = db.collection(gDsName + 'esf');
+            col.updateMany(
+                {'cd': {$eq: today}, 'hrurl': {$eq: _hrurl}},//当日小区的均价
+                {$set: {'hrap': _avgPrice}},
+                function (err, r) {
+                    assert.equal(err, null);
+
+                    //最后一条记录处理完毕后关闭连接
+                    if (i === hrs.length - 1) {
+                        ut.showLog('已完成全部小区的二手房hrap更新。');
+                        db.close();
+                    }
+                    ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
+                });
+
+
         }
-    }
+    })
 
 
 }
