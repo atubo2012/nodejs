@@ -59,7 +59,7 @@ module.exports = {
         url:1
     },
     cEsfSortBy2:{bsr:1},
-    bsrLessThen: 0.98
-    dcNewOnly:false,     //是否只导出新上架的记录
+    bsrLessThen: 0.98,
+    dcNewOnly:false     //是否只导出新上架的记录
 
 };
