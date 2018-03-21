@@ -238,7 +238,7 @@ exports.hasElmt = function (obj) {
  */
 exports.wf = function (filename,content) {
     let fs = require('fs');
-    fs.writeFile(filename, content,  function(err) {
+    fs.writeFileSync(filename, content, 'utf8', function(err) {
         if (err) {
             return console.error('写入文件时发生错误',err);
         }

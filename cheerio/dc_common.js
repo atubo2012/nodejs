@@ -6,100 +6,199 @@ let dbut = require('./dbutils.js');
 let cf = require('./config.js');
 let dc = require('./dcutils.js');
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd');
+const gCmd = 'node dc_common.js ';
 
-let gDsName = 'ljcq';
-let gSiteUrl = 'https://cq.lianjia.com';
-let zone = 'zhaomushan';
+let gCity = 'sh';
+let gDsName = 'lj' + gCity;
+let gSiteUrl = 'https://{}.lianjia.com';
+let gZone = 'taopu';    //debug模式下时使用的默认板块
 
-let gCurrentPageNum = 0;
-let gNextPageUrl = '';
-let ghasMoreNew = true;
-let gTotalPage = 0;
+let gCurrentPageNum = 0;    //当前的页数
+let gNextPageUrl = '';      //下一页的链接
+let gTotalPage = 0;         //总页数，在每一页中都要解析总页数，并更新该变量，在日志中显示进度。
+let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合config.dcNewOnly=true时使用。
 
-let gParsedData = [];       //解析后的全部结果
-let gHrPageAmt = 0;
+let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
+let gDistricts = [];        //城市的行政区列表和区内的板块列表
+
 
 main();
 
-
 function main() {
-    process.setMaxListeners(cf.cMaxListener);
-    let args = process.argv.splice(2);
-    let _instruct = args[0];
 
+    try {
+        process.setMaxListeners(cf.cMaxListener);
 
-    if (args.length < 1) {
-        console.error('应指定指令名参数，如：node dc_zhongyuan.js dczone beiwaitan');
+        //截取出应用程序的参数。process.argv的前两个元素为：args[0]:node，args[1]:程序文件.js
+        let args = process.argv.splice(2);
+        let _instruct = args[0];
 
-        //以下代码专用于开发调试阶段由storm调试模式下使用，生产环境中应将以下代码注释。
-        //dc.dc(gSiteUrl, '/xiaoqu/putuo/', zonePaser4zy, zoneDp4zy, cf.cMaxPageNum);
-    } else {
-
-        zone = args[1];
-        if ('dchr' === _instruct) {
-
-            if (zone === undefined) {
-                ut.showLog('未指定板块名，应指定板块名！');
-            } else {
-                ut.showLog('开始采集板块内小区......');
-                dc.dcs(gSiteUrl, '/xiaoqu/' + zone + '/', zonePaser, zoneDp, cf.cMaxPageNum);
-            }
-        } else if ('dcesf' === _instruct) {
-
-            if (zone === undefined) {
-                ut.showLog('未指定板块名，应指定板块名！');
-            } else {
-                ut.showLog('开始采集板块内二手房......');
-                dc.dcs(gSiteUrl, '/ershoufang/' + zone + '/', esfPaser, esfDp, cf.cMaxPageNum);
-            }
-
-        } else if ('setap' === _instruct) {
-
-            ut.showLog('开始设置二手房的均价......');
-
-            dbut.findFromDb(gDsName + 'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
-
-        } else if ('mccfmd' === _instruct) {
-
-            ut.showLog('开始计算二手房的折扣率......');
-
-            dbut.findFromDb(gDsName + 'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
-
-        } else if ('expdata' === _instruct) {
-
-            ut.showLog('开始导出数据......');
-
-            export2xls(cf.cDburl, gDsName + 'esf');
-
+        if (args.length < 2) {
+            console.error('应指定指令名参数，如：node dc_common.js dczone sh.taopu');
         } else {
-            ut.showLog(_instruct + '不是合法的指令，合法的指令包括：dczone|dcesf|setap|mccmfd|expdata');
+            //解析城市和板块参数
+            let cityAndZone = args[1].split('.');
+            gCity = cityAndZone[0]; //区分不同的城市、库表名
+            gZone = cityAndZone[1]; //区分不同的板块
+
+            //根据运行时的参数，设置url和数据库名
+            gSiteUrl = gSiteUrl.replace('{}', gCity);
+            gDsName = 'lj' + gCity;
+
+
+            console.log(gCity, gZone);
+
+            if ('dchr' === _instruct) {
+                if (gZone === undefined) {
+                    ut.showLog('未指定板块名，应指定板块名！');
+                } else {
+                    ut.showLog('开始采集小区......');
+                    dc.dcs(gSiteUrl, '/xiaoqu/' + gZone + '/', hrPaser, hrDp, cf.cMaxPageNum);
+                }
+
+            } else if ('dcesf' === _instruct) {
+                if (gZone === undefined) {
+                    ut.showLog('未指定板块名，应指定板块名！');
+                } else {
+                    ut.showLog('开始采集二手房......');
+                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/', esfPaser, esfDp, cf.cMaxPageNum);
+                }
+
+            } else if ('getdist' === _instruct) {
+                ut.showLog('开始解析和生成板块信息......');
+                ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
+                dc.dcs(gSiteUrl, '/ershoufang/', distPaser, dcZones, cf.cMaxPageNum);
+
+            } else if ('setap' === _instruct) {
+                ut.showLog('开始设置二手房的均价......');
+                dbut.findFromDb(gDsName + 'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
+
+            } else if ('mccfmd' === _instruct) {
+
+                ut.showLog('开始计算二手房的折扣率......');
+                dbut.findFromDb(gDsName + 'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
+
+            } else if ('expdata' === _instruct) {
+                ut.showLog('开始导出数据......');
+                export2xls(cf.cDburl, gDsName + 'esf');
+
+            } else {
+                ut.showLog(_instruct + '不是合法的指令，合法的指令包括：dczone|dcesf|setap|mccmfd|expdata');
+            }
         }
-
+    } catch (e) {
+        console.error('gCurrentUrl=[' + gCurrentUrl + ']');
+        console.error('gCurrentPageNum=[' + gCurrentPageNum + ']');
+        console.error('exception=[' + e + ']');
+        console.error(e);
     }
-
-
     /**
-     * 以下代码用于开发
+     * 以下代码用于开发调试时使用，在使用webstorme的debug功能时则不需要使用以下代码。
      */
     //采集板块内的小区信息
-    //dc.dcs(gSiteUrl, '/xiaoqu/'+zone+'/' , zonePaser, zoneDp,cf.cMaxPageNum);
-
+    //dc.dcs(gSiteUrl, '/xiaoqu/'+gZone+'/' , zonePaser, zoneDp,cf.cMaxPageNum);
     //采集版块内二手房信息
-    //dc.dcs(gSiteUrl,'/ershoufang/'+zone+'/',esfPaser,esfDp,cf.cMaxPageNum);
-
+    //dc.dcs(gSiteUrl,'/ershoufang/'+gZone+'/',esfPaser,esfDp,cf.cMaxPageNum);
     //查询各小区的均价数据，并设置小区内二手房的均价，以便下一步计算
-    //dbut.findFromDb(gDsName+'zone', {cd: ut.getToday()}, 5000, cf.cDburl, setEsfAvgPrice);
-
+    //dbut.findFromDb(gDsName+'gZone', {cd: ut.getToday()}, 5000, cf.cDburl, setEsfAvgPrice);
     //根据折扣率计算公式，计算二手房的折扣率
     //dbut.findFromDb(gDsName+'esf', {cd: ut.getToday()}, 50000, cf.cDburl, setEsfDisct);
-
     //导出
     //export2xls(cf.cDburl, gDsName+'esf');
+}
+
+/**
+ * 行政区解析器
+ * @param html
+ * @param dataProcessor
+ * @returns {string}
+ */
+function distPaser(html, dataProcessor) {
+
+    ut.wf(gZone + '-dist-content.html', html);
+    //加载页面内容
+    let $ = cheerio.load(html);
+
+    //解析行政区信息。定位【指定属性名、属性值(data-role="ershoufang")】的节点下的class=selected属性
+    let districts = $('div.m-filter').find('.position').find('div[data-role="ershoufang"]').find('a');
+
+    //组装行政区列表
+    districts.each(function () {
+        let d = $(this);  //每条记录
+        let _link = d.attr('href');
+        let _distName = d.text();
+        gDistricts.push({'dn': _distName, 'url': _link});
+    });
+
+    dataProcessor(gDistricts);
+    //遍历每个行政区，并采集区内的板块
+
+    console.log('行政区信息', JSON.stringify(gDistricts));
+
+    //行政区列表，只在一页内采集完，所以无需返回下一页的url
+    return '';
 
 }
 
 
+/**
+ * 递归采集各个行政区内的板块信息
+ * 初始的地址为行政区gDistricts数组中的第一个元素的地址（即第一页）
+ * 下一页来自于gDistricts数组中的逐个元素内包含的地址
+ */
+function dcZones() {
+    dc.dcs(gSiteUrl, gDistricts[0].url, zonePaser, zoneDp, cf.cMaxPageNum);
+}
+
 function zonePaser(html, dataProcessor) {
+
+    gCurrentZones = [];
+    ut.wf(gZone + '-zones-content.html', html);
+
+    //加载页面内容
+    let $ = cheerio.load(html);
+    //定位到板块的链接信息区div
+    let zones = $('div.m-filter').find('.position').find('div[data-role="ershoufang"]').find('div')['1'];
+    //定位所有的链接
+    zones = $('a', zones);
+
+    //解析url和板块名
+    zones.each(function () {
+        let z = $(this);  //每条记录
+
+        //解析url和板块名称
+        let _link = z.attr('href');
+        let _zoneName = z.text();
+
+        //解析过程中顺便生成板块采集的命令行脚本
+        let cmdArea = gCity + '.' + _link.replace('\/ershoufang\/', '').replace('\/', '');
+        let _dcHrcmd = gCmd + ' dchr ' + cmdArea;
+        let _dcEsfcmd = gCmd + ' dcesf ' + cmdArea;
+        gCurrentZones.push({'zn': _zoneName, 'url': _link,'dchrcmd':_dcHrcmd,'dcesfcmd':_dcEsfcmd});
+    });
+
+    //解析完成后，将数据以元素的方式加载到行政区数组中
+    Object.assign(gDistricts[gCurrentPageNum], {'zones': gCurrentZones});
+
+
+    //判断是否有下一页，如有则返回下一页的url
+    gTotalPage = gDistricts.length;
+    console.log((gCurrentPageNum + 1) + '/', gTotalPage);
+    if (gCurrentPageNum < gTotalPage - 1) {
+        gNextPageUrl = gDistricts[gCurrentPageNum + 1].url;
+        gCurrentPageNum++;
+
+    } else {
+        gNextPageUrl = '';
+        //已完成全部翻页操作，对数据保存到数据库
+        dataProcessor(gDistricts);
+    }
+
+    //行政区的采集不是靠翻页，所以将下一页的url设置为''
+    return gNextPageUrl;
+}
+
+function hrPaser(html, dataProcessor) {
 
     let nextPageUrl = '';
     let results = [];//对数据解析后的内容
@@ -189,7 +288,7 @@ function zonePaser(html, dataProcessor) {
         }
     } catch (e) {
         console.log('翻页信息解析错误', e, dblk);
-        ut.wf(ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
+        ut.wf(gZone + '-hrs-' + ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
         //process.exit(0);
     }
     let a = '1';//调试锚点，在此终端，便于观察上述变量的值
@@ -207,20 +306,11 @@ function zonePaser(html, dataProcessor) {
 
 }
 
-/**
- * 中原二手房数据解析函数
- * @param html
- * @param dataProcessor
- * @returns 下一页的url
- * TODO:与链家二手房数据有差别的字段：
- * 链家：floor(地区/6层)，drct(南)
- * 中原：floor(中层)，drct(朝南北）
- */
 function esfPaser(html, dataProcessor) {
 
 
     let results = [];//对数据解析后的内容
-    ut.wf('content-cq.html', html);
+    //ut.wf(gZone + '-esf-content.html', html);
     let _nowtime = ut.formatDate(new Date(), 'hhmmss');
 
 
@@ -238,7 +328,6 @@ function esfPaser(html, dataProcessor) {
     //用对象名的方式访问找到的节点。下文中0就是对象的key
     let _dist = tmp['0'].children[0].data;  //行政区名
     let _disturl = tmp['0'].attribs.href;  //行政区URL
-
 
     //基于上级节点(.sellListContent)定位列表中的每一条记录的节点，在遍历每条记录的过程中解析数据，生成数组
     let lc = $('li.clear', '.sellListContent');
@@ -393,7 +482,7 @@ function esfPaser(html, dataProcessor) {
         //将本条房源信息加入结果集
         results.push(esfInfo);
         if (lc.length === results.length) {
-            ut.showLog('本页已加载完');
+            //ut.showLog('本页已加载完');
             dataProcessor(results);
         }
     });
@@ -414,7 +503,7 @@ function esfPaser(html, dataProcessor) {
         }
     } catch (e) {
         console.log('翻页信息解析错误', e, dblk, gNextPageUrl);
-        ut.wf(ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
+        ut.wf(gZone + '-esf-' + ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
         setTimeout(function () {
             //此处采用函数递归调用，也可以考虑启动单独的进程调用。
             console.log('休息一会.....');
@@ -426,7 +515,6 @@ function esfPaser(html, dataProcessor) {
     return gNextPageUrl;
 
 }
-
 
 /**
  * 遍历二手房，计算每个房源的折扣率，并将esf信息入库
@@ -454,12 +542,34 @@ function saveBsEsfFromHr(esfs) {
  * 采集某个版块内小区信息入库。
  * @param hrs
  */
-function zoneDp(hrs) {
+function hrDp(hrs) {
     dbut.save2db(gDsName + 'zone', hrs, cf.cDburl);
 }
 
 function esfDp(esfs) {
     dbut.save2db2(gDsName + 'esf', esfs, cf.cDburl);
+}
+
+function zoneDp(districts) {
+    //将当前板块的数组添加到当前的行政区
+    //console.log('zoneDp', JSON.stringify(zones))
+    dbut.save2db2(gDsName + 'dist', districts, cf.cDburl);
+
+    //生成采集该城市的命令行脚本文件的内容
+    let distCmd = '';
+    districts.map(function (item,index,arr) {
+        //distCmd += '\nrem ' +item.dn+'\n';
+        item.zones.map(function (item1,index1,arr1) {
+            //distCmd+='rem '+item1.zn+'\n';
+            distCmd+=item1.dchrcmd+' \n';
+            distCmd+=item1.dcesfcmd+' \n';
+        })
+    });
+
+    ut.wf(gDsName+'.bat','del *.html\n'+distCmd);
+
+    let a = 1;
+
 }
 
 function export2xls(dburl, tbname) {
@@ -630,27 +740,6 @@ function getDisct4Size(size) {
     return sizeDisct;
 }
 
-/**
- * 根据楼层维度计算扣率
- * @param floorType
- * @returns {{floord: number}}
- */
-function getDisct4Floor(floorType) {
-
-    let floorDisct = 1;  //默认的楼层折扣
-
-    if ('高层低区' === floorType) {
-
-        floorDisct = 0.85;
-
-    } else if ('多层高区' === floorType || '多层低区' === floorType) {
-
-        floorDisct = 0.9;
-    }
-
-    return floorDisct;
-
-}
 
 /**
  * 根据总价维度计算扣率
@@ -685,7 +774,6 @@ function getDisct4buildYear(bdyear) {
     return bdyearDisct;
 
 }
-
 
 /**
  * 为二手房信息设置小区均价，便于后续计算
@@ -726,5 +814,27 @@ function setEsfAvgPrice(hrs, db) {
         }
     })
 
+
+}
+
+/**
+ * 根据楼层维度计算扣率
+ * @param floorType
+ * @returns {{floord: number}}
+ */
+function getDisct4Floor(floorType) {
+
+    let floorDisct = 1;  //默认的楼层折扣
+
+    if ('高层低区' === floorType) {
+
+        floorDisct = 0.85;
+
+    } else if ('多层高区' === floorType || '多层低区' === floorType) {
+
+        floorDisct = 0.9;
+    }
+
+    return floorDisct;
 
 }
