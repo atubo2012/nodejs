@@ -199,7 +199,7 @@ node dc_zhongyuan.js mccfmd
 node dc_zhongyuan.js expdata
 
 mail -s "Sun Report zy" -a zyesf-$dateymd.xlsx sh_3k@126.com <  a.msg
-mail -s "Sun Report zy" -a zyesf-$dateymd.xlsx 459420202@qq.com < a.msg
-mail -s "Sun Report zy" -a zyesf-$dateymd*.xlsx 505304964@qq.com < a.msg
+#mail -s "Sun Report zy" -a zyesf-$dateymd.xlsx 459420202@qq.com < a.msg
+#mail -s "Sun Report zy" -a zyesf-$dateymd*.xlsx 505304964@qq.com < a.msg
 
 cp log/zycron.log log/zycron-$dateymd.log

@@ -2,6 +2,7 @@ export dateymd=`date '+%Y%m%d'`
 export LANG=en_US.UTF-8
 export PATH=$PATH:/root/download/node-v6.11.0-linux-x64/bin
 cd /root/workspace/nodejs/cheerio
+echo "db.ljcqesf.remove({});db.ljcqzone.remove({});"  | mongo 100td:27117/test2
 
 mv  *.xlsx ./data
 # 江北
@@ -148,4 +149,4 @@ node dc_common.js expdata
 
 mail -s "ljcq" -a ljcqesf-$dateymd.xlsx sh_3k@126.com <  a.msg
 
-cp log/ljcq.log log/ljcq-$dateymd.log
+mv log/ljcq.log log/ljcq-$dateymd.log

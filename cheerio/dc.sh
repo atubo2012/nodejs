@@ -1,18 +1,13 @@
 #本文件被/etc/crontab文件定期调用执行
 
+#设置机密信息
+. /root/workspace/su/setsecinfo.sh
+. /root/workspace/su/setenv.sh
 
-#LANG必须设置为以下内容，否则mail命令发出的邮件会将附件转换成ATT0000001.bin
-export LANG=en_US.UTF-8
-export PATH=$PATH:/root/download/node-v6.11.0-linux-x64/bin
 
-#数据库参数
-export dbhost=100td
-export dbusername=p
-export dbpassword=w
-
-export distname=pudongxinqu
-export zonename=lujiazui
+#export LANG=en_US.UTF-8
 export dateymd=`date '+%Y%m%d'`
+
 #进入工作目录
 cd /root/workspace/nodejs/cheerio
 
@@ -21,16 +16,10 @@ mv  ljesf*.xlsx ./data
 mv  *.txt ./data
 
 #1、清理数据库
-#cat select.sql | mysql -h $dbhost -u$dbusername -p$dbpassword  > ./log/$distname.log
-#cat cleardata.sql | mysql -h $dbhost -u$dbusername -p$dbpassword  >> ./log/$distname.log
-
+echo "db.esf.remove({})" | mongo 100td:27117/$SI_DC_DBNAME
+echo "db.hrhis.remove({})" | mongo 100td:27117/$SI_DC_DBNAME
 #2、采集数据
-#python3 spider.py get_district_house sh $distname  >> ./log/$distname.log
-echo "采集数据......"
 
-
-
-echo "计算小区均价....."
 #node dc_lianjia.js minhang
 node dc_lianjia.js chunshen
 node dc_lianjia.js gumei
@@ -161,6 +150,20 @@ node dc_lianjia.js sichuanbeilu
 #node dc_lianjia.js jinshan
 #node dc_lianjia.js chongming
 #node dc_lianjia.js songjiang
+node dc_lianjia.js chedun
+node dc_lianjia.js jiuting
+node dc_lianjia.js maogang
+node dc_lianjia.js shihudang
+node dc_lianjia.js shenminbieshu
+node dc_lianjia.js songjiangxincheng
+node dc_lianjia.js sheshan
+node dc_lianjia.js songjiangdaxuecheng
+node dc_lianjia.js sijing
+node dc_lianjia.js songjianglaocheng
+node dc_lianjia.js xincheng
+node dc_lianjia.js xiaokunshan
+node dc_lianjia.js xinbang
+node dc_lianjia.js yexie
 
 #node dc_lianjia.js pudongxinqu
 node dc_lianjia.js lujiazui
@@ -198,7 +201,6 @@ node dc_lianjia.js shibobinjiang
 node dc_lianjia.js wuliqiao
 node dc_lianjia.js xintiandi
 node dc_lianjia.js yuyuan
-
 node mc_lianjia.js
 
 #3、导出数据
@@ -215,7 +217,9 @@ node export2xls.js
 echo "发送邮件......"
 mv ./log/cron.log ./log/cron-$dateymd.log
 mv *.html ./log
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu01 <  ./log/cron-$dateymd.log
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu02 < a.msg
-mail -s "Sun Report lj $dateymd" -a ljesf-$dateymd.xlsx $mu03 < a.msg
+
+mail -s "lj $dateymd" -a ljesf-$dateymd.xlsx $mu01 <  ./log/cron-$dateymd.log
+mail -s "lj $dateymd" -a ljesf-$dateymd.xlsx $mu02 < a.msg
+mail -s "lj $dateymd" -a ljesf-$dateymd.xlsx $mu03 < a.msg
+
 echo "发送邮件ok"
