@@ -18,7 +18,7 @@ module.exports = {
 
 
     //性能参数
-    cDcInterval : 5000, //两次采集之间的时间
+    cDcInterval : 2000, //两次采集之间的时间
     cMaxPageNum : 100, //采集页面的数量，如果太多可能会造成内存溢出。
 
     cEsfFields:{'bsr':1,
@@ -60,6 +60,7 @@ module.exports = {
     },
     cEsfSortBy2:{bsr:1},
     bsrLessThen: 0.98,
-    dcNewOnly:false     //是否只导出新上架的记录
+    dcNewOnly:false,     //是否只导出新上架的记录
+    iclParkInfo:false    //是否包含车位，默认是不包括
 
 };

@@ -1,0 +1,21 @@
+export dateymd=`date '+%Y%m%d'`
+
+#设置环境变量
+. /root/workspace/su/setenv.sh
+. /root/workspace/su/setsecinfo.sh
+
+#进入工作目录
+cd /root/workspace/nodejs/cheerio
+
+#清理工作目录中的过渡文件
+rm -rf *.html
+
+#清理数据
+echo "db.lj{city}esf.remove({});db.lj{city}zone.remove({});"  | mongo $SI_DC_DBURL
+
+#创建索引
+echo "db.lj{city}esf.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({url:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({cd:1,hrap:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({cd:1,hrurl:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}zone.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL

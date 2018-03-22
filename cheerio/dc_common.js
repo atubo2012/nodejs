@@ -20,6 +20,7 @@ let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合confi
 
 let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
 let gDistricts = [];        //城市的行政区列表和区内的板块列表
+let gPostConds = cf.iclParkInfo ? '':'ng1/';  //如果
 
 
 main();
@@ -61,7 +62,7 @@ function main() {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
                     ut.showLog('开始采集二手房......');
-                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/', esfPaser, esfDp, cf.cMaxPageNum);
+                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/'+gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
                 }
 
             } else if ('getdist' === _instruct) {
@@ -115,7 +116,7 @@ function main() {
  */
 function distPaser(html, dataProcessor) {
 
-    ut.wf(gZone + '-dist-content.html', html);
+    ut.wf(gZone + 'dist.html', html);
     //加载页面内容
     let $ = cheerio.load(html);
 
@@ -153,7 +154,7 @@ function dcZones() {
 function zonePaser(html, dataProcessor) {
 
     gCurrentZones = [];
-    ut.wf(gZone + '-zones-content.html', html);
+    ut.wf('zones.html', html);
 
     //加载页面内容
     let $ = cheerio.load(html);
@@ -550,23 +551,40 @@ function esfDp(esfs) {
     dbut.save2db2(gDsName + 'esf', esfs, cf.cDburl);
 }
 
+/**
+ * 将行政区、板块数据保存入库。并生成该城市所有板块的采集脚本。
+ * @param districts
+ */
 function zoneDp(districts) {
+
     //将当前板块的数组添加到当前的行政区
-    //console.log('zoneDp', JSON.stringify(zones))
     dbut.save2db2(gDsName + 'dist', districts, cf.cDburl);
 
     //生成采集该城市的命令行脚本文件的内容
-    let distCmd = '';
+    let totalDcTmies = 0;
     districts.map(function (item,index,arr) {
-        //distCmd += '\nrem ' +item.dn+'\n';
-        item.zones.map(function (item1,index1,arr1) {
-            //distCmd+='rem '+item1.zn+'\n';
-            distCmd+=item1.dchrcmd+' \n';
-            distCmd+=item1.dcesfcmd+' \n';
-        })
+        totalDcTmies += item.zones.length*2;//因为版块内的小区要采集一次、二手房要采集一次，一共两次
     });
 
-    ut.wf(gDsName+'.bat','del *.html\n'+distCmd);
+    let distCmd = '';
+    let dcTimes = 0;
+    districts.map(function (item,index,arr) {
+        item.zones.map(function (item1,index1,arr1) {
+            //distCmd+='rem '+item1.zn+'\n';
+            distCmd+=item1.dchrcmd+' \n';dcTimes++;
+            distCmd+='echo '+dcTimes+' \/'+totalDcTmies+' \n';
+            distCmd+=item1.dcesfcmd+' \n';dcTimes++;
+            distCmd+='echo '+dcTimes+' \/'+totalDcTmies+' \n';
+        });
+        distCmd += ' \n';
+
+    });
+
+    let _head = ut.rf('dchead.sh.tplt');
+    let _foot = ut.rf('dcfoot.sh.tplt');
+
+    ut.wf(gDsName+'.sh',(_head+distCmd+_foot).replace(/{city}/g,gCity));
+
 
     let a = 1;
 

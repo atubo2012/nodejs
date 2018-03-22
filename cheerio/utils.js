@@ -245,4 +245,8 @@ exports.wf = function (filename,content) {
     });
 };
 
+exports.rf = function (filename) {
+    return require('fs').readFileSync(filename,'utf8');
+};
+
 
