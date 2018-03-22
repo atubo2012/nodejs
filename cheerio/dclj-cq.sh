@@ -1,8 +1,14 @@
 export dateymd=`date '+%Y%m%d'`
 export LANG=en_US.UTF-8
 export PATH=$PATH:/root/download/node-v6.11.0-linux-x64/bin
+
+
+#设置机密信息
+. /root/workspace/su/setsecinfo.sh
+. /root/workspace/su/setenv.sh
+
 cd /root/workspace/nodejs/cheerio
-echo "db.ljcqesf.remove({});db.ljcqzone.remove({});"  | mongo 100td:27117/test2
+echo "db.ljcqesf.remove({});db.ljcqzone.remove({});"  | mongo 100td:27117/$SI_DC_DBNAME
 
 mv  *.xlsx ./data
 # 江北
