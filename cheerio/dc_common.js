@@ -20,7 +20,7 @@ let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合confi
 
 let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
 let gDistricts = [];        //城市的行政区列表和区内的板块列表
-let gPostConds = cf.iclParkInfo ? '':'ng1/';  //如果
+let gPostConds = cf.iclParkInfo ? '' : 'ng1/';  //如果
 
 
 main();
@@ -62,7 +62,7 @@ function main() {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
                     ut.showLog('开始采集二手房......');
-                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/'+gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
+                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/' + gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
                 }
 
             } else if ('getdist' === _instruct) {
@@ -175,7 +175,7 @@ function zonePaser(html, dataProcessor) {
         let cmdArea = gCity + '.' + _link.replace('\/ershoufang\/', '').replace('\/', '');
         let _dcHrcmd = gCmd + ' dchr ' + cmdArea;
         let _dcEsfcmd = gCmd + ' dcesf ' + cmdArea;
-        gCurrentZones.push({'zn': _zoneName, 'url': _link,'dchrcmd':_dcHrcmd,'dcesfcmd':_dcEsfcmd});
+        gCurrentZones.push({'zn': _zoneName, 'url': _link, 'dchrcmd': _dcHrcmd, 'dcesfcmd': _dcEsfcmd});
     });
 
     //解析完成后，将数据以元素的方式加载到行政区数组中
@@ -561,29 +561,39 @@ function zoneDp(districts) {
     dbut.save2db2(gDsName + 'dist', districts, cf.cDburl);
 
     //生成采集该城市的命令行脚本文件的内容
-    let totalDcTmies = 0;
-    districts.map(function (item,index,arr) {
-        totalDcTmies += item.zones.length*2;//因为版块内的小区要采集一次、二手房要采集一次，一共两次
+    let totalDcTmies = 0;   //总采集量
+    districts.map(function (item, index, arr) {
+        totalDcTmies += item.zones.length * 2;//因为版块内的小区要采集一次、二手房要采集一次，一共两次
     });
 
+    //生成脚本文件内容
     let distCmd = '';
     let dcTimes = 0;
-    districts.map(function (item,index,arr) {
-        item.zones.map(function (item1,index1,arr1) {
-            //distCmd+='rem '+item1.zn+'\n';
-            distCmd+=item1.dchrcmd+' \n';dcTimes++;
-            distCmd+='echo '+dcTimes+' \/'+totalDcTmies+' \n';
-            distCmd+=item1.dcesfcmd+' \n';dcTimes++;
-            distCmd+='echo '+dcTimes+' \/'+totalDcTmies+' \n';
-        });
-        distCmd += ' \n';
+    districts.map(function (item, index, arr) {
 
+        if (cf.xclZones[gCity].indexOf(item.dn) < 0) {
+            //跳过不需要采集的行政区
+            item.zones.map(function (item1, index1, arr1) {
+                //跳过不需要采集的板块
+                if (cf.xclZones[gCity].indexOf(item1.zn) < 0) {
+                    distCmd += item1.dchrcmd + ' \n';
+                    dcTimes++;
+                    distCmd += 'echo ' + dcTimes + ' \/' + totalDcTmies + ' \n';
+                    distCmd += item1.dcesfcmd + ' \n';
+                    dcTimes++;
+                    distCmd += 'echo ' + dcTimes + ' \/' + totalDcTmies + ' \n';
+                }
+            });
+        }
+        distCmd += ' \n';
     });
 
+    //在脚本文件的首部和尾部增加例行操作（如清理数据、建索引、计算、执行等）
     let _head = ut.rf('dchead.sh.tplt');
     let _foot = ut.rf('dcfoot.sh.tplt');
 
-    ut.wf(gDsName+'.sh',(_head+distCmd+_foot).replace(/{city}/g,gCity));
+    //在文件系统中生成采集脚本
+    ut.wf(gDsName + '.sh', (_head + distCmd + _foot).replace(/{city}/g, gCity));
 
 
     let a = 1;
@@ -718,7 +728,7 @@ function setEsfDisct(esfs, db) {
                         db.close();
                     }
                 });
-            ut.showLog(esf.title + '-折扣率信息将被设置');
+            //ut.showLog(esf.title + '-折扣率信息将被设置');
         }
     });
 }
@@ -825,7 +835,7 @@ function setEsfAvgPrice(hrs, db) {
                         ut.showLog('已完成全部小区的二手房hrap更新。');
                         db.close();
                     }
-                    ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
+                    //ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
                 });
 
 
