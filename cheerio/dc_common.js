@@ -20,7 +20,7 @@ let gTotalPage = 0;         //总页数，在每一页中都要解析总页数�
 
 let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
 let gDistricts = [];        //城市的行政区列表和区内的板块列表
-let gPostConds = cf.iclParkInfo ? '' : 'ng1/';  //根据参数来控制是否包含车位
+let gPostConds = cf.iclParkInfo ? '' : 'ng1hu1/';  //根据参数来控制是否包含车位
 
 
 main();
@@ -41,6 +41,11 @@ function main() {
             let cityAndZone = args[1].split('.');
             gCity = cityAndZone[0]; //区分不同的城市、库表名
             gZone = cityAndZone[1]; //区分不同的板块
+            if (typeof(cf.xclZones[gCity])==='undefined'){
+                console.error('请在config.js中xclZones属性中设置['+gCity+']对应的入口');
+                return;
+            }
+
 
             //根据运行时的参数，设置url和数据库名
             gSiteUrl = gSiteUrl.replace('{}', gCity);
@@ -600,7 +605,7 @@ function export2xls(dburl, tbname) {
     MongoClient.connect(dburl, function (err, db) {
 
         ut.showLog('开始连接DB');
-        selectData2(db, tbname, function (result) {
+        selectData3(db, tbname, function (result) {
 
             //ut.showLog(JSON.stringify(result));
             let data_content = [];
@@ -657,6 +662,30 @@ function selectData2(db, tbname, callback) {
                     {cd: ut.getToday()},
                     {hrap: {$gt: 0}} //只筛选出小区单价>0的二手房源，计算其笋度
                 ]
+            }
+        },
+        {$project: cf.cEsfFields2},
+        {$sort: cf.cEsfSortBy2}
+    ]).toArray(function (err, result) {
+        if (err) {
+            console.log('出错：' + err);
+            return;
+        }
+        ut.showLog('完成查询' + result.length + '条');
+        callback(result);
+    });
+}
+
+
+function selectData3(db, tbname, callback) {
+    ut.showLog('开始查询将导出的数据');
+    let collection = db.collection(tbname);
+
+
+    collection.aggregate([
+        {
+            $match: {
+                $and: cf.expConditions
             }
         },
         {$project: cf.cEsfFields2},

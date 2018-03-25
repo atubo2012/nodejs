@@ -65,8 +65,13 @@ module.exports = {
         title:1,
         url:1
     },
+    expConditions:[
+        {isnew: '新上'},
+        {hrap: {$gt: 0}},
+        {size:{$gt:40}}
+        ],
     cEsfSortBy2:{bsr:1},
-    bsrLessThen: 0.98,
+    bsrLessThen: 100,
     dcNewOnly:true,     //是否只导出新上架的记录
     iclParkInfo:false,    //是否包含车位，默认是不包括
     xclZones:{          //不予采集的板块
@@ -80,6 +85,7 @@ module.exports = {
         'nj':[],
         'xa':[],
         'wh':[],
+        'sz':[]
     }
 
 };
