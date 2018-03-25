@@ -16,11 +16,11 @@ let gZone = 'taopu';    //debug模式下时使用的默认板块
 let gCurrentPageNum = 0;    //当前的页数
 let gNextPageUrl = '';      //下一页的链接
 let gTotalPage = 0;         //总页数，在每一页中都要解析总页数，并更新该变量，在日志中显示进度。
-let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合config.dcNewOnly=true时使用。
+//let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合config.dcNewOnly=true时使用。
 
 let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
 let gDistricts = [];        //城市的行政区列表和区内的板块列表
-let gPostConds = cf.iclParkInfo ? '' : 'ng1/';  //如果
+let gPostConds = cf.iclParkInfo ? '' : 'ng1/';  //根据参数来控制是否包含车位
 
 
 main();
@@ -62,7 +62,7 @@ function main() {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
                     ut.showLog('开始采集二手房......');
-                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/' + gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
+                    dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/co32' + gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
                 }
 
             } else if ('getdist' === _instruct) {
@@ -341,22 +341,16 @@ function esfPaser(html, dataProcessor) {
         let _title = dblk.text(); //标题
         let _url = $('a', dblk).attr('href');//url
 
+        //是否新上
         let _isNew = $('span.new.tagBlock', dblk).text();
         _isNew = (_isNew === '新上') ? _isNew : '';
 
 
-        //如果配置文件中约定只采集新盘，当前记录不是新上，则退出。
-        if (cf.dcNewOnly && _isNew !== '新上') {
-            ghasMoreNew = false;
-            return;
-        }
-
         let _type = '';
-        let _layout = '';
+        let _layout = null;
         let startIndex = 1;
         dblk = esf.find('.houseInfo');
         tmp = dblk.text().split('|');
-
         //别墅房型的信息列：复地太阳城 | 联排别墅 | 4室3厅 | 179.74平米 | 南 | 简装 | 无电梯
         if (tmp[startIndex].trim().indexOf('别墅') >= 0) {
             _type = tmp[startIndex++].trim();

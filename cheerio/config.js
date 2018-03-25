@@ -32,35 +32,42 @@ module.exports = {
     cExlExpPath:'./',
 
     //excel导出时的列名
-    cEsfFieldsName2:['笋度','看','关','挂','小区','板','区','核定单价','小区单价','房源单价','综合折率','总价','折率','楼层','折率','面积','折率','年份','折率','房型','标题','URL'],
+    cEsfFieldsName2:['笋度','看','关','挂','新上','区','板','小区',
+        '年份','年份折率','楼层','楼层折率','面积','面积折率',
+        '小区单价','房源单价','核定单价','综合折率',
+        '总价','总价折率','房型','标题','URL'],
     cEsfFields2:{
         _id:0,
         bsr:{$divide:['$uprice',{$multiply:['$cfmd','$hrap']}]},
         seeamt:1,
         favamt:1,
         asktime:1,
-        hrname:1,
-        zone:1,
+        isnew:1,
         sdist:1,
-        cfmp:{$multiply:['$cfmd','$hrap']},
-        hrap:1,
-        uprice:1,
-        cfmd:1,
-        tprice:1,
-        tpriced:1,
+        zone:1,
+        hrname:1,
+
+        bdyear:1,
+        bdyeard:1,
         floor:1,
         floord:1,
         size:1,
         sized:1,
-        bdyear:1,
-        bdyeard:1,
+
+        hrap:1,
+        uprice:1,
+        cfmp:{$multiply:['$cfmd','$hrap']},
+        cfmd:1,
+
+        tprice:1,
+        tpriced:1,
         layout:1,
         title:1,
         url:1
     },
     cEsfSortBy2:{bsr:1},
     bsrLessThen: 0.98,
-    dcNewOnly:false,     //是否只导出新上架的记录
+    dcNewOnly:true,     //是否只导出新上架的记录
     iclParkInfo:false,    //是否包含车位，默认是不包括
     xclZones:{          //不予采集的板块
         'sh':['浦东','闵行','宝山','徐汇',
