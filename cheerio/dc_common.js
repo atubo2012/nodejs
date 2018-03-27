@@ -5,6 +5,7 @@ let ut = require('./utils.js');
 let dbut = require('./dbutils.js');
 let cf = require('./config.js');
 let dc = require('./dcutils.js');
+let os = require('os');
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd');
 const gCmd = 'node dc_common.js ';
 
