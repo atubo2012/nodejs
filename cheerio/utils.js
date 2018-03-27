@@ -240,13 +240,17 @@ exports.wf = function (filename,content) {
     let fs = require('fs');
     fs.writeFileSync(filename, content, 'utf8', function(err) {
         if (err) {
-            return console.error('写入文件时发生错误',err);
+            console.error('写入文件时发生错误',err);
         }
     });
 };
 
 exports.rf = function (filename) {
     return require('fs').readFileSync(filename,'utf8');
+};
+
+exports.getOs = function(){
+    return require('os');
 };
 
 

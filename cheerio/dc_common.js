@@ -16,7 +16,6 @@ let gZone = 'taopu';    //debug模式下时使用的默认板块
 let gCurrentPageNum = 0;    //当前的页数
 let gNextPageUrl = '';      //下一页的链接
 let gTotalPage = 0;         //总页数，在每一页中都要解析总页数，并更新该变量，在日志中显示进度。
-//let ghasMoreNew = true;     //是否仍有更多“新上”记录，配合config.dcNewOnly=true时使用。
 
 let gCurrentZones = [];     //当前被采集的板块列表，板块采集完后将被作为元素，被加入到gDistricts数组中某个元素成为属性
 let gDistricts = [];        //城市的行政区列表和区内的板块列表
@@ -41,8 +40,8 @@ function main() {
             let cityAndZone = args[1].split('.');
             gCity = cityAndZone[0]; //区分不同的城市、库表名
             gZone = cityAndZone[1]; //区分不同的板块
-            if (typeof(cf.xclZones[gCity])==='undefined'){
-                console.error('请在config.js中xclZones属性中设置['+gCity+']对应的入口');
+            if (typeof(cf.xclZones[gCity]) === 'undefined') {
+                console.error('请在config.js中xclZones属性中设置[' + gCity + ']对应的入口');
                 return;
             }
 
@@ -50,8 +49,6 @@ function main() {
             //根据运行时的参数，设置url和数据库名
             gSiteUrl = gSiteUrl.replace('{}', gCity);
             gDsName = 'lj' + gCity;
-
-
             console.log(gCity, gZone);
 
             if ('dchr' === _instruct) {
@@ -294,17 +291,8 @@ function hrPaser(html, dataProcessor) {
         }
     } catch (e) {
         console.log('翻页信息解析错误', e, dblk);
-        ut.wf(gZone + '-hrs-' + ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
-        //process.exit(0);
+        ut.wf(gZone + '-hrs-' + ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);
     }
-    let a = '1';//调试锚点，在此终端，便于观察上述变量的值
-
-    // if (dblk.length !== 0) {
-    //     nextPageUrl = dblk[0].attribs['href']; //下一页的url
-    // } else {
-    //     nextPageUrl = '';
-    // }
-
 
     dataProcessor(results);//处理本页数据
     return nextPageUrl;
@@ -420,7 +408,7 @@ function esfPaser(html, dataProcessor) {
         tmp = dblk.text().split('/');
         let _favAmt = Number(tmp[0].replace('人关注', '').trim());
         let _seeAmt = Number(tmp[1].replace('共', '').replace('次带看', '').trim());
-        let _askTime = tmp[2].replace('以前发布', '');
+        let _askTime = tmp[2].replace('以前发布', '').trim();
 
 
         let _tags = [];
@@ -595,6 +583,17 @@ function zoneDp(districts) {
     ut.wf(gDsName + '.sh', (_head + distCmd + _foot).replace(/{city}/g, gCity));
 
 
+    //Linux环境下，当生.sh脚本后，对该脚本增加执行权限
+    if (ut.getOs().type() === 'Linux') {
+        let exec = require('child_process').exec;
+        let cmd = 'chmod +x ' + gDsName + '.sh';
+
+        exec(cmd, function (error, stdout, stderr) {
+            console.log('ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
+        });
+    }
+
+
     let a = 1;
 
 }
@@ -676,7 +675,12 @@ function selectData2(db, tbname, callback) {
     });
 }
 
-
+/**
+ * 支持在config.js中设置查询条件
+ * @param db
+ * @param tbname
+ * @param callback
+ */
 function selectData3(db, tbname, callback) {
     ut.showLog('开始查询将导出的数据');
     let collection = db.collection(tbname);
@@ -743,7 +747,6 @@ function setEsfDisct(esfs, db) {
                 {$set: disct},
                 function (err, r) {
                     assert.equal(err, null);
-                    //console.log(_url,'-',r.result.nModified);
 
                     //最后一条记录处理完毕后关闭连接
                     if (i === esfs.length - 1) {
@@ -751,7 +754,6 @@ function setEsfDisct(esfs, db) {
                         db.close();
                     }
                 });
-            //ut.showLog(esf.title + '-折扣率信息将被设置');
         }
     });
 }
@@ -765,11 +767,6 @@ function getDisctCfm(size, tprice, bdyear) {
 
     let cfmd = (sizeDisct.toFixed(2) * tpriceDisct.toFixed(2) * bdyearDisct.toFixed(2)).toFixed(3);
     cfmd = Math.round(cfmd * 100) / 100; //最低折扣
-
-    // ut.showLog('面积折率:' + size + '平米->' + sizeDisct);
-    // ut.showLog('总价折率:' + tprice + '元->' + tpriceDisct);
-    // ut.showLog('年代折率:' + bdyear + '年->' + bdyearDisct);
-    // ut.showLog('核定折率->' + cfmd);
 
     return {'sized': sizeDisct, 'tpriced': tpriceDisct, 'bdyeard': bdyearDisct, 'cfmd': cfmd};
 }

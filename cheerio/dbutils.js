@@ -104,3 +104,28 @@ exports.findFromDb =function (tbname,where,limit,cDburl,callback) {
     });
 
 };
+
+
+exports.findFromDb2 =function (tbname,where,flds,limit,cDburl,callback) {
+    let log = require('./utils').showLog;
+    log('开始读表:'+JSON.stringify(tbname)+':'+JSON.stringify(where));
+
+    MongoClient.connect(cDburl, function (err, db) {
+        assert.equal(null,err);
+        let collection = db.collection(tbname); //哪个表
+
+        collection.find(where,flds).limit(limit).toArray(function(err, docs) {
+            assert.equal(null, err);
+            //assert.equal(limit, docs.length);
+
+            console.log(tbname+'======',docs.length);
+
+            db.close();
+
+            callback(docs,db);
+
+        });
+
+    });
+
+};

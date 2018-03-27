@@ -17,6 +17,7 @@ echo "db.lj{city}esf.remove({});db.lj{city}zone.remove({});"  | mongo $SI_DC_DBU
 echo "db.lj{city}esf.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({url:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({bsr:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({asktime:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({isnew:1,bsr:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({cd:1,hrap:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({cd:1,hrurl:1})"  | mongo $SI_DC_DBURL
