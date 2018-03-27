@@ -73,7 +73,7 @@ module.exports = {
         {size: {$gt: 40}},
     ],
     cEsfSortBy2: {bsr: 1},
-    bsrLessThen: 100,
+    bsrLessThen: 0.95,
     dcNewOnly: true,     //是否只导出新上架的记录
     iclParkInfo: false,    //是否包含车位，默认是不包括
     xclZones: {          //不予采集的板块
