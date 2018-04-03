@@ -6,6 +6,7 @@ let dbut = require('./dbutils.js');
 let cf = require('./config.js');
 let dc = require('./dcutils.js');
 let os = require('os');
+const gFilePostFix = os.type()==='Linux'?'.sh':'.bat';
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd');
 const gCmd = 'node dc_common.js ';
 
@@ -141,7 +142,7 @@ function  getDistAll (){
     Object.keys(cf.cities).forEach((item,index,arr)=>{
         cmd +='node dc_common.js getdist '+item+'. \n';
     });
-    ut.wf('get_dist_all.bat',cmd);
+    ut.wf('get_dist_all'+gFilePostFix,cmd);
 }
 
 
@@ -760,10 +761,17 @@ function esfPaser4bj(html, dataProcessor) {
 function brokerPaser(html, dataProcessor) {
 
 
-    let nextPageUrl = '';
     let results = [];
     let _nowtime = ut.formatDate(new Date(), 'hhmmss');
 
+
+    //页面内容中若包含反采集的关键字（神秘的力量.....）,则睡眠一会后再采集上一页信息
+    if(html.indexOf(cf.cAntiDcKeyWord)>0){
+        setTimeout(function () {
+            console.warn('休息一会.....');
+            return gNextPageUrl;
+        }, cf.cDcPauseInterval);
+    }
 
     //加载页面内容
     let $ = cheerio.load(html);
@@ -833,13 +841,11 @@ function brokerPaser(html, dataProcessor) {
         }
     });
 
-    //根据列表头部的记录总数，判断是否有下一页，如为0则直接返回。
-    let dblk = $('div.list-head.clear').find('h2').find('span');
-    let rcdAmt = Number(dblk.text().trim());
-    if (rcdAmt === 0) return '';    //直接返回，表示没有下一页了。
+
 
     //根据页码区域的数值，计算是否有下一页
-    dblk = $('.house-lst-page-box');
+    let dblk = $('.house-lst-page-box');
+    if(dblk.length===0) return "";  //没有上述标记，表示只有一页，且少于30条记录
     try {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
         gTotalPage = Number(pageInfo.totalPage);
@@ -847,23 +853,18 @@ function brokerPaser(html, dataProcessor) {
         console.log(curPage + '/' + gTotalPage);
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            nextPageUrl = temp.replace('{page}', curPage + 1);
+            gNextPageUrl = temp.replace('{page}', curPage + 1);
             gCurrentPageNum++;
         } else {
-            nextPageUrl = '';
+            gNextPageUrl = '';
         }
     } catch (e) {
-        console.log('翻页信息解析错误', e, dblk, nextPageUrl);
+        console.error('翻页信息解析错误', e.message, nextPageUrl);
         ut.wf(gZone + '-jjr-' + ut.getToday() + '-' + ut.getNow() + '.html', JSON.stringify(e) + '\n' + html);       //dc.sh中，应在程序结束前将.html移动到log目录中
-        setTimeout(function () {
-            //此处采用函数递归调用，也可以考虑启动单独的进程调用。
-            console.warn('休息一会.....');
-        }, 10000);
-
     }
     let a = '1';//调试锚点，在此终端，便于观察上述变量的值
 
-    return nextPageUrl;
+    return gNextPageUrl;
 
 }
 
@@ -963,22 +964,22 @@ function zoneDp(districts) {
     //生成二手房采集脚本
     let _head = ut.rf('dchead.sh.tplt'); //在脚本文件的首部和尾部增加例行操作（如清理数据、建索引、计算、执行等）
     let _foot = ut.rf('dcfoot.sh.tplt');
-    ut.wf(gDsName + '.sh', (_head + distCmd + _foot).replace(/{city}/g, gCity));
+    ut.wf(gDsName + gFilePostFix, (_head + distCmd + _foot).replace(/{city}/g, gCity));
 
     //生成经纪人采集脚本（按行政区）
     let _headjjr = ut.rf('dcheadjjr.sh.tplt');
     let _footjjr = ut.rf('dcfootjjr.sh.tplt');
-    ut.wf('jjr-' + gDsName + '.sh', (_headjjr + brokerCmd2 + _footjjr).replace(/{city}/g, gCity));
-    ut.wf('jjr-' + gDsName + '.sh', (_headjjr + brokerCmd + _footjjr).replace(/{city}/g, gCity));
+    ut.wf('jjr-' + gDsName + gFilePostFix, (_headjjr + brokerCmd2 + _footjjr).replace(/{city}/g, gCity));
+    ut.wf('jjr-' + gDsName + gFilePostFix, (_headjjr + brokerCmd + _footjjr).replace(/{city}/g, gCity));
 
-    ut.wf('jjr-bydist-dev-' + gDsName + '.bat', (brokerCmd2).replace(/{city}/g, gCity));
-    ut.wf('jjr-byzone-dev-' + gDsName + '.bat', (brokerCmd).replace(/{city}/g, gCity));
+    ut.wf('jjr-bydist-dev-' + gDsName + gFilePostFix, (brokerCmd2).replace(/{city}/g, gCity));
+    ut.wf('jjr-byzone-dev-' + gDsName + gFilePostFix, (brokerCmd).replace(/{city}/g, gCity));
 
 
     //Linux环境下，当生.sh脚本后，对该脚本增加执行权限
     if (ut.getOs().type() === 'Linux') {
         let exec = require('child_process').exec;
-        let cmd = 'chmod +x ' + gDsName + '.sh';
+        let cmd = 'chmod +x ' + gDsName + gFilePostFix;
 
         exec(cmd, function (error, stdout, stderr) {
             console.log('ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
