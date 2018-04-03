@@ -41,8 +41,8 @@ function main() {
             let cityAndZone = args[1].split('.');
             gCity = cityAndZone[0]; //区分不同的城市、库表名
             gZone = cityAndZone[1]; //区分不同的板块
-            if (typeof(cf.xclZones[gCity]) === 'undefined') {
-                console.error('请在config.js中xclZones属性中设置[' + gCity + ']对应的入口');
+            if (typeof(cf.cities[gCity]) === 'undefined') {
+                console.error('请在config.js中cities属性中设置[' + gCity + ']对应的入口');
                 return;
             }
 
@@ -78,6 +78,11 @@ function main() {
                 ut.showLog('开始解析和生成板块信息......');
                 ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
                 dc.dcs(gSiteUrl, '/ershoufang/', distPaser, dcZones, cf.cMaxPageNum);
+
+            } else if ('getdistall' === _instruct) {
+                ut.showLog('开始解析和生成板块信息......');
+                ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
+                getDistAll();
 
             } else if ('getbroker' === _instruct) {
                 ut.showLog('开始解析和经纪人信息......');
@@ -128,7 +133,20 @@ function main() {
 }
 
 /**
- * 特定城市内的行政区解析器
+ * 生成脚本文件，该脚本中的内容是生成所有城市的房源和经纪人采集脚本
+ * 场景：esf、jjr的模板修改后，需要重新执行node dc_common.js getdistall sh
+ */
+function  getDistAll (){
+    let cmd = '\n';
+    Object.keys(cf.cities).forEach((item,index,arr)=>{
+        cmd +='node dc_common.js getdist '+item+'. \n';
+    });
+    ut.wf('get_dist_all.bat',cmd);
+}
+
+
+/**
+ * 指定城市的行政区解析器
  * @param html
  * @param dataProcessor
  * @returns {string}
@@ -173,6 +191,12 @@ function dcZones() {
     dc.dcs(gSiteUrl, gDistricts[0].url, zonePaser, zoneDp, cf.cMaxPageNum);
 }
 
+/**
+ * 板块解析器
+ * @param html
+ * @param dataProcessor
+ * @returns {string}
+ */
 function zonePaser(html, dataProcessor) {
 
     gCurrentZones = [];
@@ -225,6 +249,12 @@ function zonePaser(html, dataProcessor) {
     return gNextPageUrl;
 }
 
+/**
+ * 小区列表解析器
+ * @param html
+ * @param dataProcessor
+ * @returns {string}
+ */
 function hrPaser(html, dataProcessor) {
 
     let nextPageUrl = '';
@@ -889,11 +919,11 @@ function zoneDp(districts) {
     districts.map(function (item, index, arr) {
 
         //生成二手房信息采集脚本
-        if (cf.xclZones[gCity].indexOf(item.dn) < 0) {
+        if (cf.cities[gCity].exclude.indexOf(item.dn) < 0) {
             //跳过不需要采集的行政区
             item.zones.map(function (item1, index1, arr1) {
                 //跳过不需要采集的板块
-                if (cf.xclZones[gCity].indexOf(item1.zn) < 0) {
+                if (cf.cities[gCity].exclude.indexOf(item1.zn) < 0) {
                     distCmd += item1.dchrcmd + ' \n';
                     dcTimes++;
                     distCmd += 'echo ' + dcTimes + ' \/' + totalDcTmies + ' \n';//按所有板块的数量，生成总体进度

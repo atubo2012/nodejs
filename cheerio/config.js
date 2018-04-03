@@ -75,25 +75,28 @@ let config = {
     ],
     cEsfSortBy2: {bsr: 1},
     bsrLessThen: 0.95,
-    dcNewOnly: true,     //是否只导出新上架的记录
-    iclParkInfo: false,    //是否包含车位，默认是不包括
-    xclZones: {          //不予采集的板块
-        'sh': [
+    dcNewOnly: true,        //是否只导出新上架的记录
+    iclParkInfo: false,     //是否包含车位，默认是不包括
+
+    cities: {               //城市相关的参数
+        'sh': {exclude:[    //不予采集的板块
             //'浦东','闵行','宝山','徐汇' ,'普陀', '杨浦','长宁','黄浦','静安','闸北','虹口',
-            '松江', '嘉定', '青浦', '奉贤', '金山', '崇明', '上海周边'
-        ],
-        'cd': [],
-        'cq': ['八宝街'],
-        'hz': [],
-        'nj': [],
-        'xa': [],
-        'wh': [],
-        'sz': [],
-        'tj': [],
-        'su': [],
-        'bj':[]
+            '松江', '嘉定', '青浦', '奉贤', '金山', '崇明', '上海周边']
+        },
+        'cd': {exclude:[
+            '江津', '大渡口', '渝中'
+        ],},
+        'cq': {exclude:['八宝街'],},
+        'hz': {exclude:[],},
+        'nj': {exclude:[],},
+        'xa': {exclude:[],},
+        'wh': {exclude:[],},
+        'sz': {exclude:[],},
+        'tj': {exclude:[],},
+        'su': {exclude:[],},
+        'bj': {exclude:[],},
     },
-    dss: {       //数据源
+    dss: { //数据源
         'zy': {
             siteUrl: '{}.centanet.com',
             protocol: 'http',
@@ -120,7 +123,7 @@ let config = {
     jjrFilter:
         {
             $or: [
-                {$and: [{looked: {$gte: 15}}, {sell: {$gte: 15}}]},
+                {$and: [{looked: {$gte: 15}}, {sell: {$gte: 15}}]}, //头部的jjr
                 {$and: [{looked: {$eq: 0}}, {sell: {$eq: 0}}]},
             ]
         }
