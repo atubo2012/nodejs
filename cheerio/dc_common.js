@@ -833,8 +833,13 @@ function brokerPaser(html, dataProcessor) {
         }
     });
 
+    //根据列表头部的记录总数，判断是否有下一页，如为0则直接返回。
+    let dblk = $('div.list-head.clear').find('h2').find('span');
+    let rcdAmt = Number(dblk.text().trim());
+    if (rcdAmt === 0) return '';    //直接返回，表示没有下一页了。
+
     //根据页码区域的数值，计算是否有下一页
-    let dblk = $('.house-lst-page-box');
+    dblk = $('.house-lst-page-box');
     try {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
         gTotalPage = Number(pageInfo.totalPage);
