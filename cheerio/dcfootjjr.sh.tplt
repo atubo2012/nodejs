@@ -1,8 +1,19 @@
 
 
+
+
 node dc_common.js expjjr {city}.
 
+echo "发送通知"
 mail -s "{city}jjr" -a lj{city}jjr-$dateymd.xlsx $SI_PARM_MAILUSERS_DEV <  a.msg
 
+echo "转存数据"
 mv lj{city}jjr-$dateymd.xlsx ./data
+
+echo "转存日志"
+mv log/lj{city}jjr.log log/lj{city}jjr-$dateymd.log
+mv *.html ./log
+
+
+
 

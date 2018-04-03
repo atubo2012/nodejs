@@ -1,13 +1,18 @@
 
 
-
 node dc_common.js setap {city}.
 node dc_common.js mccfmd {city}.
 node dc_common.js expdata {city}.
 
+echo "发送通知"
 mail -s "{city}" -a lj{city}esf-$dateymd.xlsx $SI_PARM_MAILUSERS_DEV <  a.msg
 
+echo "转存数据"
+mv lj{city}esf-$dateymd.xlsx ./data
+
+echo "转存日志"
 mv log/lj{city}.log log/lj{city}-$dateymd.log
 mv *.html ./log
-mv lj{city}esf-$dateymd.xlsx ./data
+
+
 
