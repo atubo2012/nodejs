@@ -1,0 +1,13 @@
+export dateymd=`date '+%Y%m%d'`
+
+#设置环境变量
+. /root/workspace/su/setenv.sh
+. /root/workspace/su/setsecinfo.sh
+
+#进入工作目录
+cd /root/workspace/nodejs/cheerio
+
+#清理数据
+echo "db.lj{city}jjr.remove({});"  | mongo $SI_DC_DBURL
+
+

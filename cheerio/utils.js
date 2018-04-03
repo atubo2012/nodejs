@@ -203,6 +203,55 @@ exports.exp2xls = function(dataArray,path,filename) {
     log('完成生成EXCEL');
 };
 
+/**
+ * 将对象的value转换成数组
+ * 如果要将key转换成数组，就push(item)
+ */
+function obj2Array (obj) {
+    let arr = [];
+    for (let itm in obj) {
+        arr.push(obj[itm]);
+    }
+    return arr;
+}
+exports.obj2Array = function(obj){
+    return obj2Array(obj);
+};
+
+
+/**
+ * 按照数组keys的顺序将对象中的值转换成素组
+ * @param obj
+ * @param keys
+ * @returns {Array}
+ */
+function obj2ArrayByOrder (obj,keys) {
+    let arr = [];
+    //遍历keys，并将
+    keys.forEach(function (item,index,arr2) {
+        arr.push(obj[item])
+    }) ;
+    return arr;
+}
+exports.obj2ArrayByOrder=function(obj,keys){
+    return obj2ArrayByOrder(obj,keys);
+};
+obj2ArrayByOrder({'a':'a1','b':'b1'},['b','a']);
+
+
+/**
+ * 将对象数组转化为元素为数组的数组
+ * @param objArray
+ * @returns {Array}
+ */
+exports.objArray2Array =function (objArray) {
+    let ret = [];
+    objArray.forEach(function (item,index,arr) {
+        ret.push(obj2Array(item));
+    });
+    return ret;
+};
+
 
 /**
  * 检查一个字符串是否为数字

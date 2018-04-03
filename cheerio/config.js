@@ -2,7 +2,8 @@
 /**
  * 全局参数
  */
-module.exports = {
+
+let config = {
 
     //数据库参数
     //cDburl:'mongodb://100td:27117/pspdb',
@@ -68,7 +69,7 @@ module.exports = {
     },
     expConditions: [
         {isnew: '新上'},
-        {asktime: ' 刚刚发布'},
+   //     {asktime: '刚刚发布'},
         {hrap: {$gt: 0}},//该条件必须存在，因为有些小区的均价为0，如该条件不存在则可能出现导出失败
         {size: {$gt: 40}},
     ],
@@ -88,13 +89,41 @@ module.exports = {
         'xa': [],
         'wh': [],
         'sz': [],
-        'tj': []
+        'tj': [],
+        'su': [],
+        'bj':[]
     },
     dss: {       //数据源
         'zy': {
             siteUrl: '{}.centanet.com',
             protocol: 'http',
         }
-    }
-
+    },
+    //经纪人导出的字段
+    jjrFieldsName: ['区', '板', '姓名', '职位', '累计成交', '30天带看', '标签', '电话', 'URL'],
+    jjrFieldsValue: {
+        _id: 0,
+        dist: 1,
+        zone: 1,
+        name: 1,
+        position: 1,
+        sell: 1,
+        looked: 1,
+        label: 1,
+        phone: 1,
+        url: 1
+    },
+    jjrSortBy: {
+        sell: -1,    //按销售量降序排列
+        //looked:-1   //按带看量降序排列
+    },
+    jjrFilter:
+        {
+            $or: [
+                {$and: [{looked: {$gte: 15}}, {sell: {$gte: 15}}]},
+                {$and: [{looked: {$eq: 0}}, {sell: {$eq: 0}}]},
+            ]
+        }
 };
+
+module.exports = config;
