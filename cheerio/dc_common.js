@@ -81,7 +81,7 @@ function main() {
                 dc.dcs(gSiteUrl, '/ershoufang/', distPaser, dcZones, cf.cMaxPageNum);
 
             } else if ('getdistall' === _instruct) {
-                ut.showLog('开始解析和生成板块信息......');
+                ut.showLog('生成各城市的采集脚本......');
                 ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
                 getDistAll();
 
@@ -140,7 +140,7 @@ function main() {
 function  getDistAll (){
     let cmd = '\n';
     Object.keys(cf.cities).forEach((item,index,arr)=>{
-        cmd +='node dc_common.js getdist '+item+'. \n';
+        cmd +=gCmd+' getdist '+item+'. \n';
     });
     ut.wf('get_dist_all'+gFilePostFix,cmd);
 }
@@ -945,7 +945,7 @@ function zoneDp(districts) {
         //逐板块采集经纪人（适用于一个行政区中超过100页经纪人的场景
         brokerCmd += 'echo ' + (index + 1) + '\/' + districts.length + ' \n'; //按行政区的数量生成进度
         item.zones.forEach(function (item2, index2, arr) {
-            brokerCmd += 'node dc_common.js getbroker ' + gCity + '.' + item2.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
+            brokerCmd += gCmd+' getbroker ' + gCity + '.' + item2.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
         });
         index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
             brokerCmd += 'echo  complete \n' :
@@ -953,8 +953,7 @@ function zoneDp(districts) {
 
         //逐行政区采集经纪人
         brokerCmd2 += 'echo ' + (index + 1) + '\/' + districts.length + ' \n'; //按行政区的数量生成进度
-        brokerCmd2 += 'node dc_common.js getbroker ' + gCity + '.' + item.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
-        brokerCmd2 += 'node dc_common.js expjjr ' + gCity +'. \n';
+        brokerCmd2 += gCmd+' getbroker ' + gCity + '.' + item.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
             index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
             brokerCmd2 += 'echo  complete \n' :
             '';
@@ -972,17 +971,15 @@ function zoneDp(districts) {
     ut.wf('jjr-' + gDsName + gFilePostFix, (_headjjr + brokerCmd2 + _footjjr).replace(/{city}/g, gCity));
     ut.wf('jjr-' + gDsName + gFilePostFix, (_headjjr + brokerCmd + _footjjr).replace(/{city}/g, gCity));
 
-    ut.wf('jjr-bydist-dev-' + gDsName + gFilePostFix, (brokerCmd2).replace(/{city}/g, gCity));
-    ut.wf('jjr-byzone-dev-' + gDsName + gFilePostFix, (brokerCmd).replace(/{city}/g, gCity));
-
-
-    //Linux环境下，当生.sh脚本后，对该脚本增加执行权限
-    if (ut.getOs().type() === 'Linux') {
+    //只在开发环境中才生成.bat的调试脚本，避免生产环境有太多.bat文件
+    if (os.type() !== 'Linux') {
+        ut.wf('jjr-bydist-dev-' + gDsName + gFilePostFix, (brokerCmd2).replace(/{city}/g, gCity));
+        ut.wf('jjr-byzone-dev-' + gDsName + gFilePostFix, (brokerCmd).replace(/{city}/g, gCity));
+    }else{ //只在生产环境中执行为脚本授权的操作。
         let exec = require('child_process').exec;
-        let cmd = 'chmod +x ' + gDsName + gFilePostFix;
-
+        let cmd = 'chmod +x *.sh';
         exec(cmd, function (error, stdout, stderr) {
-            console.log('ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
+            console.log('请确认生成的sh脚本是否有可执行权限！','ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
         });
     }
 
