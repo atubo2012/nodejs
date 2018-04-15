@@ -228,7 +228,7 @@ exports.obj2Array = function(obj){
 function obj2ArrayByOrder (obj,keys) {
     let arr = [];
     //遍历keys，并将
-    keys.forEach(function (item,index,arr2) {
+    keys.forEach(function (item) {
         arr.push(obj[item])
     }) ;
     return arr;
@@ -246,7 +246,7 @@ obj2ArrayByOrder({'a':'a1','b':'b1'},['b','a']);
  */
 exports.objArray2Array =function (objArray) {
     let ret = [];
-    objArray.forEach(function (item,index,arr) {
+    objArray.forEach(function (item) {
         ret.push(obj2Array(item));
     });
     return ret;
@@ -261,13 +261,15 @@ exports.objArray2Array =function (objArray) {
 exports.isNumber = function (str) {
     let a = parseFloat(str);
 
-    if(isNaN(a)){
-        //log(str +' is not number '+a);
-        return false;
-    }else{
-        //log(str +' is  number '+a);
-        return true;
-    }
+    // if(isNaN(a)){
+    //     //log(str +' is not number '+a);
+    //     return false;
+    // }else{
+    //     //log(str +' is  number '+a);
+    //     return true;
+    // }
+
+    return !isNaN(a);
 };
 
 /**
@@ -281,7 +283,15 @@ exports.hasElmt = function (obj) {
 };
 
 /**
- * 向文件中写入指定的的内容
+ * 读取指定文件的内容
+ * @param filename
+ * @returns {Buffer | string}
+ */
+exports.rf = function (filename) {
+    return require('fs').readFileSync(filename,'utf8');
+};
+/**
+ * 向文件中写入指定的内容
  * @param filename
  * @param content
  */
@@ -294,12 +304,187 @@ exports.wf = function (filename,content) {
     });
 };
 
-exports.rf = function (filename) {
-    return require('fs').readFileSync(filename,'utf8');
+/**
+ * 向指定文件中以追加模式写入内容
+ * @param filename
+ * @param content
+ */
+exports.af = function(filename,content){
+    fs.appendFileSync(filename,content,'utf-8',(err)=>{
+        if(err) throw err;
+        console.log('写入文件时发生错误',err);
+    });
 };
 
 exports.getOs = function(){
     return require('os');
+};
+
+
+/**
+ * 当前时刻与指定时刻的差。
+ * @param timer hhmm格式，表示小时分钟
+ * @returns {number} 毫秒， >=0表示已过期，<0表示尚未过期
+ */
+function getTimeDiffrence(timer) {
+
+    //设置then的时间对象
+    let then = new Date();
+    then.setHours(parseInt(timer.substring(0,2)));
+    then.setMinutes(parseInt(timer.substring(2,4)));
+    then.setSeconds(0);
+
+    //当前now对象
+    return (new Date() - then);
+}
+exports.getTimeDiffrence = function(timer){
+    return getTimeDiffrence(timer);
+};
+
+/**
+ * (day2 - day1) / (1000 * 60 * 60 * 24)
+ * 减号分割的格式化函数：endDate.replace(/\-/g, "\/")
+ * @param rms2
+ */
+
+/**
+ * 从配置信息筛选出应提醒的任务，形成任务列表
+ * @param cfg 由配置文件生成的对象
+ */
+function getAlerts(cfg) {
+
+    let todaysTask = [];//今日的发送任务
+
+    /**
+     * 遍历配置文件，找出符合以下三个条件的当日任务列表。任务列表将login()函数内的定时轮询程序读取
+     * 完成一项任务，删除一项任务项:
+     * 1、当前日期在起止日期之间。
+     * 2、当前日期在频度序列内。如未配置频度序列frequency，则表示每天此刻执行。
+     * 3、启动时刻晚于当前时刻。
+     */
+    cfg.forEach((item) => {
+        item.contents.filter(function (elmt) {
+
+            //1、校验当前日期是否在起止日期之间
+            let fromDate = new Date(elmt.from);
+            let toDate = new Date(elmt.to);
+            let now = new Date();
+            let isInRange = (now >= fromDate && now < toDate);
+
+            //2、校验当前日期是否在频度序列中
+            let isOnToday = false;
+            let dateOfMonth = now.getDate().toString();
+            let dayOfWeek = now.getDay().toString();
+            if (elmt.frequence) {
+                isOnToday =
+                    ((elmt.frequence.dateOfMonth) && (elmt.frequence.dateOfMonth.indexOf(dateOfMonth) >= 0)) ||
+                    ((elmt.frequence.dayOfWeek) && (elmt.frequence.dayOfWeek.indexOf(dayOfWeek) >= 0));
+            } else {
+                isOnToday = true;
+            }
+
+            //3、启动时刻晚于当前时刻。
+            let isLateThenNow = (getTimeDiffrence(elmt.timer)<0);
+
+
+            //console.log(elmt.timer,isLateThenNow,isInRange,isOnToday);
+
+            //若三个条件都满足，则纳入到任务列表中
+            if (isInRange && isOnToday && isLateThenNow) {
+                todaysTask.push({'timer': elmt.timer, 'content': elmt.content, groups: item.groups});
+                //return true;
+            }
+        });
+    });
+    return todaysTask;
+}
+exports.getAlerts = function(cfg){
+    return getAlerts(cfg);
+};
+
+
+//加密函数参考：https://nodejs.org/dist/latest-v6.x/docs/api/crypto.html#crypto_class_cipher
+const crypto = require('crypto');
+
+/**
+ * 检查是否为有效的算法。
+ * @param alg
+ */
+function isValidAlg(alg) {
+    //可通过命令查看OS支持的算法：openssl list-cipher-algorithms
+    const algs = ['aes192','aes-128-ecb','aes-256-cbc'];
+
+    const err = alg+'不是可选的算法，应为'+algs+'内的算法之一';
+    if(algs.indexOf(alg)<0) throw err;
+}
+
+/**
+ * 对称加解密函数
+ * @param data
+ * @param key
+ * @param aesType
+ * @param codeType
+ * @returns {*}
+ */
+function aesEncrypt(data,key,aesType,codeType){
+    isValidAlg(aesType);
+    const cipher = crypto.createCipher(aesType,key);
+    let crypted = cipher.update(data,'utf8',codeType);
+    return crypted+cipher.final(codeType);
+}
+exports.aesEncrypt= function(data,key,aesType,codeType){
+    return aesEncrypt(data,key,aesType,codeType);
+};
+
+function aesDecrypt(encryptedData,key,aesType,codeType){
+    isValidAlg(aesType);
+    const decipher = crypto.createDecipher(aesType,key);
+    let decrypted = decipher.update(encryptedData,codeType,'utf8');
+    return decrypted+decipher.final('utf8');
+}
+exports.aesDecrypt= function(encryptedData,key,aesType,codeType){
+    return aesDecrypt(encryptedData,key,aesType,codeType);
+};
+
+/**
+ *
+ * @param data 原文
+ * @param hashType md5/hmac
+ * @param algType md5/sha1/sha256/sha512
+ * @param codeType hex/base64
+ * @param key hmac使用的key
+ * @returns {Buffer | string | * | any}
+ */
+function getHash(data,hashType,algType,codeType,key){
+    let ret = null;
+    if (/md5/.test(hashType)) {
+        ret = crypto.createHash(algType).update(data).digest(codeType);
+    }
+    else if (/hmac/.test(hashType)) {
+        ret = crypto.createHmac(algType,key).update(data).digest(codeType);
+    }
+
+    return ret;
+}
+exports.getHash= function(data,hashType,algType,codeType,key){
+    return getHash(data,hashType,algType,codeType,key);
+};
+
+
+exports.normalizeFileName = function(fileName){
+    //暂不替换中文标点符号:.，。？
+    let ret = fileName.replace(/[":&#$*|><,?\/\+\\\[\]]/g,'');
+    if(ret.length>=250)
+        ret = ret.substring(0,250);
+    //参考：https://www.cnblogs.com/moqing/archive/2016/07/13/5665126.html
+        //http://www.jb51.net/article/110516.htm
+        //http://www.jb51.net/article/84784.htm
+        //http://www.jb51.net/article/80544.htm
+        //console.log('原文件名',fileName);
+        //console.log('新文件名',ret);
+    return ret;
+
+
 };
 
 

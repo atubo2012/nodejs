@@ -139,7 +139,7 @@ function main() {
  */
 function  getDistAll (){
     let cmd = '\n';
-    Object.keys(cf.cities).forEach((item,index,arr)=>{
+    Object.keys(cf.cities).forEach((item)=>{
         cmd +=gCmd+' getdist '+item+'. \n';
     });
     ut.wf('get_dist_all'+gFilePostFix,cmd);
@@ -395,7 +395,7 @@ function esfPaser(html, dataProcessor) {
 
 
         let _type = '';
-        let _layout = null;
+
         let startIndex = 1;
         dblk = esf.find('.houseInfo');
 
@@ -406,7 +406,7 @@ function esfPaser(html, dataProcessor) {
         }
 
         //非别墅房型的新系列：华松小区 | 2室1厅 | 59.6平米 | 南 | 简装 | 无电梯
-        _layout = tmp[startIndex++].trim(); //房型
+        let _layout = tmp[startIndex++].trim(); //房型
         let _size = Number(tmp[startIndex++].trim().replace('平米', '')); //面积
         let _drct = tmp[startIndex++]; //朝向，有可能为空
         if (undefined === _drct) {
@@ -913,7 +913,7 @@ function zoneDp(districts) {
 
     //生成采集该城市的命令行脚本文件的内容
     let totalDcTmies = 0;   //总采集量
-    districts.map(function (item, index, arr) {
+    districts.map(function (item) {
         totalDcTmies += item.zones.length * 2;//因为版块内的小区要采集一次、二手房要采集一次，一共两次
     });
 
@@ -927,7 +927,7 @@ function zoneDp(districts) {
         //生成二手房信息采集脚本
         if (cf.cities[gCity].exclude.indexOf(item.dn) < 0) {
             //跳过不需要采集的行政区
-            item.zones.map(function (item1, index1, arr1) {
+            item.zones.map(function (item1) {
                 //跳过不需要采集的板块
                 if (cf.cities[gCity].exclude.indexOf(item1.zn) < 0) {
                     distCmd += item1.dchrcmd + ' \n';
@@ -944,7 +944,7 @@ function zoneDp(districts) {
 
         //逐板块采集经纪人（适用于一个行政区中超过100页经纪人的场景
         brokerCmd += 'echo ' + (index + 1) + '\/' + districts.length + ' \n'; //按行政区的数量生成进度
-        item.zones.forEach(function (item2, index2, arr) {
+        item.zones.forEach(function (item2) {
             brokerCmd += gCmd+' getbroker ' + gCity + '.' + item2.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
         });
         index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
@@ -984,7 +984,7 @@ function zoneDp(districts) {
     }
 
 
-    let a = 1;
+    //let a = 1;
 
 }
 
@@ -1083,7 +1083,7 @@ function exportBroker2() {
             {$sort: cf.jjrSortBy}
         ], cf.cDburl, function (docs) {
 
-            docs.forEach(function (item, index, arr) {
+            docs.forEach(function (item, index) {
                 let keys = Object.keys(cf.jjrFieldsValue);
                 keys.shift();//删除_id字段
 
@@ -1199,10 +1199,11 @@ function setEsfDisct(esfs, db) {
                     //最后一条记录处理完毕后关闭连接
                     if (i === esfs.length - 1) {
                         ut.showLog('已完全部二手房折扣率计算，关闭数据库连接。');
-                        db.close();
+                        //db.close();
                     }
                 });
         }
+        db.close();
     });
 }
 
@@ -1283,17 +1284,14 @@ function getDisct4buildYear(bdyear) {
  * @param db
  */
 function setEsfAvgPrice(hrs, db) {
-
     let assert = require('assert');
     let today = ut.formatDate(new Date(), 'yyyyMMdd');
 
     let MongoClient = require('mongodb').MongoClient;
     MongoClient.connect(cf.cDburl, function (err, db) {
+        try{
         ut.showLog('遍历' + hrs.length + '个小区，为小区内的二手房设置均价。');
-
         for (let i = 0; i <= hrs.length - 1; i++) {
-
-            let _hrname = hrs[i].hrname;
             let _hrurl = hrs[i].url;
             let _avgPrice = hrs[i].uprice;
 
@@ -1311,12 +1309,32 @@ function setEsfAvgPrice(hrs, db) {
                     }
                     //ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
                 });
-
-
+        }}catch(e){
+            console.error('为二手房更新均价时报错');
+            db.close();
         }
     })
+}
 
+function setEsfAvgPrice2(hrs, db) {
+    let assert = require('assert');
+    let today = ut.formatDate(new Date(), 'yyyyMMdd');
 
+    for (let i = 0; i <= hrs.length - 1; i++) {
+        let MongoClient = require('mongodb').MongoClient;
+        MongoClient.connect(cf.cDburl, function (err, db) {
+            ut.showLog('遍历第' + i + '个小区，为该小区内的二手房设置均价。');
+            let col = db.collection(gDsName + 'esf');
+            col.updateMany(
+                {'cd': {$eq: today}, 'hrurl': {$eq: hrs[i].url}},//当日小区的均价
+                {$set: {'hrap': hrs[i].uprice}},
+                function (err, r) {
+                    assert.equal(err, null);
+                    ut.showLog('已完成全部小区的二手房hrap更新。');
+                    db.close();
+                });
+        });
+    }
 }
 
 /**

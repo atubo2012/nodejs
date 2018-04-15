@@ -21,4 +21,8 @@ echo "db.lj{city}esf.ensureIndex({asktime:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({isnew:1,bsr:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({cd:1,hrap:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({cd:1,hrurl:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({bsr:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({hrap:1,size:1})"  | mongo $SI_DC_DBURL
+echo "db.lj{city}esf.ensureIndex({size:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}zone.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL
+
