@@ -91,10 +91,12 @@ bot
             //console.log(`${room.memberList().length}-${m.type()}-${m.typeApp()}-${m.typeEx()}`)
 
             const fn = filePath+`【${ut.normalizeFileName(room.topic())}】`;
+            let attFileName = '';
 
             if (m instanceof MediaMessage) {
-                const filenName = await ut.normalizeFileName(m.filename());
-                await m.saveFile(fn+'-'+ut.getToday()+'-'+filenName.replace('.url','.html'));
+                const rowFileName = await ut.normalizeFileName(m.filename());
+                attFileName = fn+'-'+ut.getToday()+'-'+rowFileName.replace('.url','.html');
+                await m.saveFile(attFileName);
                 //await console.log(`${m.mimeType()}`);
             }
 
@@ -124,7 +126,11 @@ bot
                         console.log('已订阅的群', item2);
                         let toRoom = await Room.find({topic: item2.toString()});
                         if (toRoom){// && item2!==item.from) {
-                            await toRoom.say('【' + item.from + '】' + contact.name() + "说:" + content);
+                            if(m instanceof MediaMessage)
+                                await toRoom.say(new MediaMessage(attFileName));
+                            else
+                                await toRoom.say('【' + item.from + '】' + contact.name() + "说:" + content);
+
                         } else {
                             console.warn(item.toString() + '<-这个群不存在，请确认该群是否已改名或你已从该群退出');
                         }
