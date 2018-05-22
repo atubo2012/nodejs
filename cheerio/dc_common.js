@@ -1176,6 +1176,7 @@ function setEsfDisct(esfs, db) {
             let esf = esfs[i];
             let _url = esf.url;
 
+
             let _bdyear = esf.bdyear;
             if (!ut.isNumber(_bdyear))
                 _bdyear = 9999;
