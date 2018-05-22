@@ -175,9 +175,6 @@ exports.findFromDb2 = function (tbname, where, flds, limit, cDburl, callback) {
             .limit(limit)
             .toArray(function (err, docs) {
                 assert.equal(null, err);
-                //assert.equal(limit, docs.length);
-                console.log(tbname + '======', docs.length);
-
                 db.close();
                 callback(docs, db);
         });

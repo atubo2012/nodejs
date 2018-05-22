@@ -520,6 +520,7 @@ function esfPaser(html, dataProcessor) {
 
         //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
         let cfmDisct = ut.getCfmDisct2(esfInfo.size, esfInfo.floor, esfInfo.tprice, esfInfo.bdyear);
+
         //将核定折价率合并到房源信息中。
         esfInfo = Object.assign(esfInfo, cfmDisct);
 
@@ -1162,18 +1163,9 @@ function selectData3(db, tbname, callback) {
  * @param db
  */
 function setEsfDisct(esfs, db) {
-    //db.close();
+
     let assert = require('assert');
 
-    //let esfDatas = [];
-    // ut.showLog('开始转储二手房信息到esfDatas。')
-    // for (let i = 0; i <= esfs.length - 1; i++) {
-    //     esfDatas.push(esfs[i]);
-    //     if (i === esfs.length - 1) {
-    //         ut.showLog('已完二手房信息转储，关闭之前的数据库连接。');
-    //         //db.close();
-    //     }
-    // }
 
     let MongoClient = require('mongodb').MongoClient;
     MongoClient.connect(cf.cDburl, function (err, db) {
@@ -1187,7 +1179,7 @@ function setEsfDisct(esfs, db) {
             let _bdyear = esf.bdyear;
             if (!ut.isNumber(_bdyear))
                 _bdyear = 9999;
-            let disct = getDisctCfm(esf.size, esf.tprice, _bdyear);
+            let disct = getDisctCfm(esf.size, esf.tprice, _bdyear,esf.floor);
 
             let col = db.collection(gDsName + 'esf');
             col.updateMany(
@@ -1214,17 +1206,23 @@ function setEsfDisct(esfs, db) {
  * @param bdyear
  * @returns {{sized: 面积维度的折扣率, tpriced: {tpriced: number}, bdyeard: {bdyeard: number}, cfmd: string}}
  */
-function getDisctCfm(size, tprice, bdyear) {
+function getDisctCfm(size, tprice, bdyear,floor) {
 
     let sizeDisct = getDisct4Size(size);
     let tpriceDisct = getDisct4Tprice(tprice);
     let bdyearDisct = getDisct4buildYear(bdyear);
+    let floorDisct = getDisct4Floor(floor);
 
 
-    let cfmd = (sizeDisct.toFixed(2) * tpriceDisct.toFixed(2) * bdyearDisct.toFixed(2)).toFixed(3);
+    let cfmd = (
+        sizeDisct.toFixed(2) *
+        tpriceDisct.toFixed(2) *
+        bdyearDisct.toFixed(2) *
+        floorDisct.toFixed(2)
+    ).toFixed(3);
     cfmd = Math.round(cfmd * 100) / 100; //最低折扣
 
-    return {'sized': sizeDisct, 'tpriced': tpriceDisct, 'bdyeard': bdyearDisct, 'cfmd': cfmd};
+    return {'sized': sizeDisct, 'tpriced': tpriceDisct, 'bdyeard': bdyearDisct, 'cfmd': cfmd,};
 }
 
 /**
@@ -1236,9 +1234,9 @@ function getDisct4Size(size) {
 
     let sizeDisct = 1;
     if (size > 150 && size <= 200) {
-        sizeDisct = 0.9;
+        sizeDisct = 0.95;
     } else if (size > 200) {
-        sizeDisct = 0.8;
+        sizeDisct = 0.9;
     }
 
     return sizeDisct;
@@ -1253,9 +1251,9 @@ function getDisct4Tprice(tprice) {
 
     let tpriceDisct = 1;
     if (tprice > 1000 && tprice <= 2000) {
-        tpriceDisct = 0.9;
+        tpriceDisct = 0.95;
     } else if (tprice > 2000) {
-        tpriceDisct = 0.8;
+        tpriceDisct = 0.9;
     }
     return tpriceDisct;
 
@@ -1270,9 +1268,9 @@ function getDisct4buildYear(bdyear) {
     let bdyearDisct = 1;
 
     if (bdyear < 1990) {
-        bdyearDisct = 0.9;
-    } else if (bdyear < 1998) {
         bdyearDisct = 0.95;
+    } else if (bdyear < 1998) {
+        bdyearDisct = 0.98;
     }
     return bdyearDisct;
 
@@ -1289,27 +1287,28 @@ function setEsfAvgPrice(hrs, db) {
 
     let MongoClient = require('mongodb').MongoClient;
     MongoClient.connect(cf.cDburl, function (err, db) {
-        try{
-        ut.showLog('遍历' + hrs.length + '个小区，为小区内的二手房设置均价。');
-        for (let i = 0; i <= hrs.length - 1; i++) {
-            let _hrurl = hrs[i].url;
-            let _avgPrice = hrs[i].uprice;
+        try {
+            ut.showLog('遍历' + hrs.length + '个小区，为小区内的二手房设置均价。');
+            for (let i = 0; i <= hrs.length - 1; i++) {
+                let _hrurl = hrs[i].url;
+                let _avgPrice = hrs[i].uprice;
 
-            let col = db.collection(gDsName + 'esf');
-            col.updateMany(
-                {'cd': {$eq: today}, 'hrurl': {$eq: _hrurl}},//当日小区的均价
-                {$set: {'hrap': _avgPrice}},
-                function (err, r) {
-                    assert.equal(err, null);
+                let col = db.collection(gDsName + 'esf');
+                col.updateMany(
+                    {'cd': {$eq: today}, 'hrurl': {$eq: _hrurl}},//当日小区的均价
+                    {$set: {'hrap': _avgPrice}},
+                    function (err, r) {
+                        assert.equal(err, null);
 
-                    //最后一条记录处理完毕后关闭连接
-                    if (i === hrs.length - 1) {
-                        ut.showLog('已完成全部小区的二手房hrap更新。');
-                        db.close();
-                    }
-                    //ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
-                });
-        }}catch(e){
+                        //最后一条记录处理完毕后关闭连接
+                        if (i === hrs.length - 1) {
+                            ut.showLog('已完成全部小区的二手房hrap更新。');
+                        }
+                        //ut.showLog(_hrname + '-hr:' + JSON.stringify(r));
+                    });
+            }
+            db.close();
+        } catch (e) {
             console.error('为二手房更新均价时报错');
             db.close();
         }
@@ -1339,6 +1338,11 @@ function setEsfAvgPrice2(hrs, db) {
 
 /**
  * 根据楼层维度计算扣率
+ * 规则：
+ * 无电梯高区95折，有电梯低区95折
+ * 算法：
+ * 1、判断是否有电梯（共X层，X>7=>有电梯)
+ * 2、根据高区、低区返回折率。
  * @param floorType
  * @returns {{floord: number}}
  */
@@ -1346,13 +1350,20 @@ function getDisct4Floor(floorType) {
 
     let floorDisct = 1;  //默认的楼层折扣
 
-    if ('高层低区' === floorType) {
+    let bgIndex = floorType.indexOf('共');
+    let edIndex = floorType.indexOf('层)');
 
-        floorDisct = 0.85;
+    //有楼层信息时判断楼层和高低区
+    if(bgIndex>0){
+        let totalLevel = Number(floorType.substring(bgIndex+1,edIndex));
 
-    } else if ('多层高区' === floorType || '多层低区' === floorType) {
-
-        floorDisct = 0.9;
+        if(totalLevel>7) {
+            if(floorType.indexOf('低楼层')>=0) //有电梯的低区
+                floorDisct = 9.5
+        }else{
+            if(floorType.indexOf('高楼层')>=0) //无电梯的高区
+                floorDisct = 9.5
+        }
     }
 
     return floorDisct;

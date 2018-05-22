@@ -48,17 +48,17 @@ exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
 
     let sizeDisct = 1;
     if(size>150 && size<=200){
-        sizeDisct = 0.9;
+        sizeDisct = 0.95;
     }else if(size>200){
-        sizeDisct = 0.8;
+        sizeDisct = 0.9;
     }
     //console.log(size+'平米:'+sizeDisct*10+'折');
 
     let tpriceDisct = 1;
     if(tprice>1000 && tprice<=2000){
-        tpriceDisct = 0.9;
+        tpriceDisct = 0.95;
     }else if(tprice>2000){
-        tpriceDisct = 0.8;
+        tpriceDisct = 0.9;
     }
     //console.log(tprice+'万:'+tpriceDisct*10+'折');
 
@@ -75,12 +75,12 @@ exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
         {
             floortype = '高层';
             if(floor.indexOf('低楼层')>=0){
-                floorDisct = 0.85;
+                floorDisct = 0.95;
             }
         }else{
             floortype = '多层';
             if(floor.indexOf('高楼层')>=0 || floor.indexOf('低楼层')>=0){
-                floorDisct = 0.9;
+                floorDisct = 0.95;
             }
         }
     }else{
@@ -90,9 +90,9 @@ exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
     //bdyear = bdyear.replace('|','').replace('年建','');
     if(Number(bdyear)<1990)
     {
-        bdyearDisct = 0.9;
-    }else if(Number(bdyear)<1998){
         bdyearDisct = 0.95;
+    }else if(Number(bdyear)<1998){
+        bdyearDisct = 0.98;
     }
 
     let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)*bdyearDisct.toFixed(2)).toFixed(3);
@@ -334,7 +334,7 @@ function getTimeDiffrence(timer) {
     then.setMinutes(parseInt(timer.substring(2,4)));
     then.setSeconds(0);
 
-    //当前now对象
+    //计算当前时间与then的时差
     return (new Date() - then);
 }
 exports.getTimeDiffrence = function(timer){
@@ -391,7 +391,7 @@ function getAlerts(cfg) {
 
             //若三个条件都满足，则纳入到任务列表中
             if (isInRange && isOnToday && isLateThenNow) {
-                todaysTask.push({'timer': elmt.timer, 'content': elmt.content, groups: item.groups});
+                todaysTask.push({'timer': elmt.timer, 'content': elmt.content, 'groups': item.groups,'handler':elmt.handler});
                 //return true;
             }
         });
@@ -484,7 +484,125 @@ exports.normalizeFileName = function(fileName){
         //console.log('新文件名',ret);
     return ret;
 
+};
+
+
+/**
+ * 功能：校验主持群和收听群配置信息的合法性
+ * 场景：wechaty启动时检查配置
+ *
+ * @param forward
+ * @returns {boolean}
+ */
+function isValidForword(forward){
+    let ret = true;
+    for(let i = 0 ;i<forward.length;i++){
+       if(forward[i].to.indexOf(forward[i].from)>=0)
+       {
+           console.error('主持群['+forward[i].from+']的收听群['+forward[i].to+']中不应包括与主持群名称相同的群，请从收听群中删除['+forward[i].from+']');
+           return false;
+       }
+
+    }
+    return ret ;
+}
+exports.isValidForword= function(forward){
+    return isValidForword(forward);
+};
+// let forward= [
+//         {from: '200弄',to: ['测试群123','测试2']},
+//     {from: '三(6)班不聊群',to: ['200弄不聊群']},
+//     {from: '太阳花成长讨论区',to: ['200弄不聊群']},
+//     {from: '测试群123',to: ['test333','测试群123']},
+//     ];
+// console.log(isValidForword(forward));
+
+/**
+ * 发送httpx请求
+ * @param httpType http|https
+ * @param url 资源链接
+ * @param cb 对请求获得的应答进行处理
+ */
+function httpxReq(httpType,url,cb){
+    let httpx = require(httpType);
+    let iconv = require("iconv-lite");
+
+    let _url=httpType+'://'+url;
+    httpx.get(_url, function (res) {
+
+        let datas = [];
+        let size = 0;
+
+        res.on('data', function (data) {
+
+            datas.push(data);
+            size += data.length;
+
+        });
+        res.on("end", function () {
+            let buff = Buffer.concat(datas, size);
+            let result = iconv.decode(buff, "utf8");
+            cb(result);
+
+        });
+    }).on("error", function (err) {
+        console.error(err,'httpx请求失败');
+    });
+}
+
+exports.getWeather = function(cb){
+    let ret = '';
+    httpxReq('http', 'v.juhe.cn/weather/index?cityname=%E4%B8%8A%E6%B5%B7&dtype=&format=&key=ffd9caaa66c61ad531bb259f135cbcc4', (result) => {
+
+        //应答的包括今日与将来的天气信息
+        let weather = JSON.parse(result);
+
+        //今日天气
+        let todayWeather = weather.result.today;
+
+        //明日日期
+        let now = new Date();
+        let nextDay = now.setTime(fmd(new Date(now.getTime() + 24 * 60 * 60 * 1000), 'yyyyMMdd'));
+
+        //明日天气
+        let nextDayWeather = weather.result.future['day_' + nextDay];
+        let nextDayWeatherDesc =
+            '天气'+nextDayWeather.weather+
+            '，气温'+nextDayWeather.temperature+
+            '，风力'+nextDayWeather.wind;
+
+        //计算两日的温差
+        let ndt = nextDayWeather.temperature.replace(/℃/g, '').split('~');
+        let tdt = todayWeather.temperature.replace(/℃/g, '').split('~');
+        let tdiff = [ndt[0] - tdt[0], ndt[1] - tdt[1]];
+
+
+        console.log(tdiff);
+
+        ret = '明日'+nextDayWeatherDesc+'。与今天相比，高温' + getDescription(tdiff[0])+' 低温' + getDescription(tdiff[1]);
+        cb(ret);
+    });
 
 };
 
+function getDescription(temperatureDiff){
+    let ret = '';
+    if(temperatureDiff>0)  ret = '【热'+temperatureDiff+'度】';
+    if(temperatureDiff<0)  ret = '【凉'+temperatureDiff+'度】';
+    if(temperatureDiff===0) ret = '气温相同';
+    return ret;
+}
+
+
+let item={handler1:'testfunc'};
+
+if(item.handler)
+{
+    console.log('包含处理函数，执行处理函数');
+    let handler = eval(item.handler);
+    handler(console);
+}
+function testfunc(aaa){
+    aaa.log('hahah this is testfunc');
+}
 
