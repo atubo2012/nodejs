@@ -24,6 +24,8 @@ let forward = cfg.cfg.forward;      //订阅转发群的配置信息
 if(!ut.isValidForword(forward)){ //校验主持、收听有关的群名是否合法。不合法则退出
     process.exit(1);
 }
+
+let cf = cfg.cfg;
 let tasks = ut.getAlerts(cfg.rms);//从配置信息中获取任务列表
 let interval = cfg.cfg.interval * 1000;//0.4 *60*1000;  //设置间隔时间，用于调试时的：1分钟
 console.log('初始配置:', tasks, cfg.cfg);
@@ -222,6 +224,56 @@ try {
             }
         })
         .start();
+
+
+    /**
+     * 启动服务器，实时监听应用服务器发来的事件。
+     * 事件类别：
+     * 1、系统运行状态、预警
+     * 2、业务事件（新用户访问、老用户）
+     * 3、营销类（关怀）
+     * 4、服务类（上单、提醒、到期）
+     *
+     * ut中封装的渠道通道api可以向多种发送，为避免阻塞，可以考虑通过MQ中转。通道类型：
+     * 1、短信
+     * 2、邮件
+     * 3、微信
+     * 4、公众号
+     * 5、服务号
+     *
+     * 技术参考：https://socket.io/docs/server-api/
+     */
+
+    let server = require('http').createServer();
+    let  io = require('socket.io')(server);
+    io.on('connection', function(client){
+
+        console.log('receive connection.....')
+
+        client.on('message', async function(data){
+            console.log('receive message:',data);
+
+            //向指定的群发送信息信息指定的信息
+            let room = await Room.find({topic: "test333"});
+            await room.say(data);
+
+            //向指定的好友昵称发送消息
+        });
+
+        client.on('disconnecting', (reason) => {
+            let rooms = Object.keys(client.rooms);
+            console.log('disconnecting reason :',reason,'rooms:',rooms)
+            // ...
+        });
+        client.on('disconnect', (reason)=>{
+            console.log(' disconnect reason :',reason);
+        });
+    });
+    server.listen(3000);
+
+
+
+
 } catch (e) {
     console.error('发生异常', e);
 }
@@ -245,8 +297,6 @@ async function manageRoom() {
         }
 
 
-
-
         /**
          * 定时读取配置文件
          * 如果任务已进入了当前时间与下次刷新所在的区间，则执行任务。
@@ -268,8 +318,10 @@ async function manageRoom() {
 
                 //若当前时间已到达或超过定时timer的时刻、且小于1分钟时，则执行。
                 const td = ut.getTimeDiffrence(item.timer);
+
+                //console.log('item.keepwatch='+item.keepwatch);
                 //当前任务是否进入了时间窗口
-                if (td >= 0 && td < interval) {
+                if ((td >= 0 && td < interval) || item.keepwatch) {
 
                     //对当前任务项下的所有群群执行任务（在这里，任务就是发送消息）
                     item.groups.forEach(async (grp) => {
@@ -279,8 +331,6 @@ async function manageRoom() {
                         if (room) {
                             await room.say(item.content);
 
-
-
                             //todo:如果有handler的配置信息，则执行对应的xxxHandler函数，将并将函数的处理结果作为参数
                             if(item.handler)
                             {
@@ -288,11 +338,9 @@ async function manageRoom() {
                                 let handler = eval(item.handler);
                                 handler(room);
                             }
-
                         }
                     });
                 }
-
             });
 
 
@@ -305,7 +353,8 @@ async function manageRoom() {
              * 2、将配置文件转换成js对象，便于在程序中操作
              * 3、校验配置文件的规则
              */
-            fileContent = ut.rf('rms.json');
+            fileContent = ut.rf('./rms.json');
+
             cfg = eval("(" + fileContent + ")");//将配置信息转换成对象
 
             //刷新配置的间隔时间
@@ -314,8 +363,8 @@ async function manageRoom() {
             //通知类配置
             tasks = ut.getAlerts(cfg.rms);
             //当任务列表不空，且配置规则为定时显示时，才在日志中输出任务列表
-            (tasks.length !== 0 && cfg.cfg.showInterval) ? console.log(ut.getNow() + ':刷新任务列表:', tasks, cfg.cfg) : '';
-
+            (tasks.length !== 0 && cfg.cfg.showInterval) ? console.log(ut.getNow() + ':刷新任务列表:'+typeof(cfg.cfg.showInterval), tasks, cfg.cfg) : '';
+            //console.log(4,tasks.length,cfg.cfg.showInterval,cfg);
 
             //转发类配置
             forward = cfg.cfg.forward;
@@ -384,14 +433,8 @@ async function manageRoom() {
  * @returns {Promise.<void>}
  */
 async function testfunc(rm) {
-
-    //实现从第三方获取数据的算法
-    console.log('哈哈，this is testfunc');
-
-
     //对群发送消息
     await rm.say('哈哈，this is testfunc');
-
 }
 
 /**
@@ -408,5 +451,31 @@ async function weatherForcast(rm) {
     await ut.getWeather((result)=>{
         rm.say(result);
     });
+}
 
+/**
+ * 查询某个数据库的数据，在群里发送通知。
+ * @param rm
+ * @returns {Promise.<void>}
+ */
+async function rqstWatcher(rm) {
+
+    console.log('哈哈，this is rqstWatcher');
+
+    let assert = require('assert');
+    let MongoClient = require('mongodb').MongoClient;
+
+    MongoClient.connect(cf.dburl, function (err, db) {
+        assert.equal(null, err);
+        let collection = db.collection('rqst'); //哪个表
+
+        collection.find({rdst:'1'} ).toArray(async function (err, result) {
+            assert.equal(null, err);
+
+            console.log('记录条数=============================',result.length);
+            await rm.say('完成查询' + result.length + '条');
+            db.close();
+
+        });
+    });
 }

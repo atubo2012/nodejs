@@ -29,6 +29,8 @@
     "wechaty": "0.14.1",
     "qrcode":"^1.2.0",
     "qrcode-terminal":"^0.12.0",
-    "qsut":"latest"
+    "qsut":"latest",
+    "socket.io":"latest",
+    "socket.io-client": "latest"
   }
 }

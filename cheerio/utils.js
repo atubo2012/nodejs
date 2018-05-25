@@ -390,10 +390,17 @@ function getAlerts(cfg) {
             //console.log(elmt.timer,isLateThenNow,isInRange,isOnToday);
 
             //若三个条件都满足，则纳入到任务列表中
-            if (isInRange && isOnToday && isLateThenNow) {
+            if ((isInRange && isOnToday && isLateThenNow)) {
                 todaysTask.push({'timer': elmt.timer, 'content': elmt.content, 'groups': item.groups,'handler':elmt.handler});
-                //return true;
             }
+
+            //若keepwatch为true则纳入到任务列表中
+            if(elmt.keepwatch){
+                todaysTask.push({'timer': elmt.timer, 'content': elmt.content, 'groups': item.groups,'handler':elmt.handler,'keepwatch':elmt.keepwatch});
+            }
+
+
+
         });
     });
     return todaysTask;
