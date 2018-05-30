@@ -16,20 +16,26 @@ process.setMaxListeners(100);
  * 4、ok 配置每次从文件中读出，这样可以动态修改参数。配置内容可以在加载时，生成一个提醒任务列表，不必每次都解析配置实现。
  */
 
-//从文件中加载配置信息
+/**
+ * 加载配置文件，将配置文件内容转换成对象，便于程序中引用
+ * @type {Buffer|string}
+ */
 let fileContent = ut.rf('./rms.json');
-
 let cfg = eval("(" + fileContent + ")");//将配置信息转换成对象
-let forward = cfg.cfg.forward;      //订阅转发群的配置信息
-if(!ut.isValidForword(forward)){ //校验主持、收听有关的群名是否合法。不合法则退出
+let cf = cfg.cfg;
+let forward = cf.forward;          //订阅转发群的配置信息
+if (!ut.isValidForword(forward)) {      //校验主持、收听有关的群名是否合法。不合法则退出
     process.exit(1);
 }
 
-let cf = cfg.cfg;
-let tasks = ut.getAlerts(cfg.rms);//从配置信息中获取任务列表
-let interval = cfg.cfg.interval * 1000;//0.4 *60*1000;  //设置间隔时间，用于调试时的：1分钟
-console.log('初始配置:', tasks, cfg.cfg);
-const filePath = cfg.cfg.filepath;
+let tasks = ut.getAlerts(cfg.rms);      //从配置信息中获取任务列表
+let interval = (cf.interval || 15) * 1000; //配置刷新的间隔时间
+let writefile= cf.writefile||false;
+let debug = cf.debug||false;
+const filePath = cf.filepath;
+
+debug ? console.log('初始配置:', tasks, cf): '' ;
+
 
 
 
@@ -58,22 +64,18 @@ try {
 
                 //自动接收好友请求，并输出日志和验证请求
                 await request.accept();
-                console.log(`Contact: ${contact.name()} send request ${request.hello}`);
-                //console.log('设置别名：', await contact.alias())
-                console.log('陌生状态：', await contact.stranger());
-                console.log('官方状态：', await contact.official());
-                console.log('特殊状态：', await contact.special());
-
-
-                //根据当前用户，选择对应的问候语
-                const myName = bot.self().name();
-                // const myAlias = bot.self().alias();
-                // console.log('bot.self.name()',myName,'bot.self.alias()',myAlias);
+                debug ? console.log(
+                    `Contact: ${contact.name()} send request ${request.hello}`,
+                    '陌生状态：', await contact.stranger(),
+                    '官方状态：', await contact.official(),
+                    '特殊状态：', await contact.special()
+                ):'';
 
                 //根据新好友的名字定位Contact对象，并给好友问候
-                const fname = contact.name();   //新好友的名字
-                const contactFindByName = await Contact.find({name: fname});
-                contactFindByName.say('我是' + myName + ' Nice to meet u', '哈哈')
+                const friendName = await contact.name();   //新好友的名字
+                const myName = await bot.self().name();
+                const toFriend = await Contact.find({name: friendName});
+                await toFriend.say('I am ' + myName + ' Nice to meet u', '哈哈')
 
             }
         })
@@ -86,40 +88,25 @@ try {
             //文件名字和内容
             //const fname = cfg.cfg.filepath+cfg.cfg.logfilename+ut.getToday()+'.txt';
 
-            const fname = cfg.cfg.filepath + cfg.cfg.logfilename + ut.getToday() + '.txt';
+            const fileName = cf.filepath + cf.logfilename + ut.getToday() + '.txt';
             let ct = '';
 
             //收到群内发的消息
             if (room) {
                 //若是群内的消息，则显示群名
                 ct = ut.getNow() + `:【${room.topic()}】${contact.name()}-${m.type()}:${content}`;
-                console.log(ct);
+                debug ? console.log(ct):'';
                 //console.log(`${room.memberList().length}-${m.type()}-${m.typeApp()}-${m.typeEx()}`)
 
                 const fn = filePath + `【${ut.normalizeFileName(room.topic())}】`;
                 let attFileName = '';
-
                 if (m instanceof MediaMessage) {
                     const rowFileName = await ut.normalizeFileName(m.filename());
                     attFileName = fn + '-' + ut.getToday() + '-' + rowFileName.replace('.url', '.html');
                     await m.saveFile(attFileName);
                     //await console.log(`${m.mimeType()}`);
                 }
-
-                fs.appendFileSync(fn + '.txt', `${ct} \n`, 'utf-8', (err) => {
-                    if (err) throw err;
-                    console.log('写入文件时发生错误', err);
-                });
-
-                //A群转发到B群
-                // if (/200弄/.test(room.topic())) {
-                //     let toRoom = await Room.find({topic: "测试群123"});
-                //     if (toRoom) {
-                //         await toRoom.say(contact.name()+":"+content);
-                //         //await toRoom.say(new MediaMessage(__dirname + '/image_21.png'))
-                //         //await console.log(`加入用户后的人员`,JSON.stringify(keyroom.memberList()))
-                //     }
-                // }
+                writefile ? ut.wf(fn + '.txt', `${ct} \n`):'';
 
 
                 /**
@@ -129,23 +116,17 @@ try {
                  * 2、针对每条转发规则，如果是来自于from(主持群）的消息，则会转发到to（订阅群）
                  */
                 forward.forEach((item) => {
-
-
                     if (item.from === room.topic()) {
-                        console.log('主持群'+item.from+'收到消息');
+                        debug ? console.log('主持群' + item.from + '收到消息'):'';
 
                         //给每个订阅当前群消息的群转发
                         item.to.forEach(async (item2) => {
-
-
                             let toRoom = await Room.find({topic: item2.toString()});
                             if (toRoom) {// && item2!==item.from) {
-
                                 if (m instanceof MediaMessage)
                                     await toRoom.say(new MediaMessage(attFileName));
                                 else
                                     await toRoom.say('【' + item.from + '】' + contact.name() + "说:" + content);
-
                             } else {
                                 console.warn(toRoom + '<-这个群不存在，请确认该群是否已改名或你已从该群退出');
                             }
@@ -153,21 +134,22 @@ try {
                     }
                 });
 
-
             } else {
                 //将对我说的话格式化并保存到文件中。
                 ct = ut.getNow() + `:【${contact.name()}】: ${content} \n`;
-                console.log(ct);
-
-
                 const fn = filePath + `【${ut.normalizeFileName(contact.name())}】`;
-                ut.wf(fn+'.txt',ct);
+
+                debug ? console.log(ct):'';
+                writefile ? ut.wf(fn + '.txt', ct):'';
             }
 
 
-            //如果是自己发出的消息，则直接返回，否则程序将进入无限循环。
+            //如果是自己发出的消息，则判断是否为指令类消息，如为指令类消息，则发给zgbe。
             if (m.self()) {
-                return
+                if (/#instruct#/.test(content)) {
+                    global.socket.emit('event',content);
+                }
+                return;
             }
 
             /**根据用户发送的指令，可以做出以下响应：
@@ -200,34 +182,27 @@ try {
                     await keyroom.del(contact)
                 }
             }
-
             if (/sendgroup/.test(content)) {
-
-                const grps = rms.home.rmlist;
+                const ct = content.replace('sendgroup','');//将从发送的内容中将sendgroup指令去掉，然后再群发到组内
+                const grps = cf.multicastGroups;
                 for (let a = 0; a < grps.length; a++) {
-                    let keyroom = await Room.find({topic: grps[a]});
-                    if (keyroom) {
-                        await keyroom.say(content.replace('sendgroup', ''))
 
-                        //获得某个群的所有用户（数组内是cotact对象）
-                        //console.log(JSON.stringify(keyroom.memberList()))
-
-                        //向某个群转发消息（），TODO：可以对豆腐块内容进行整合
-                        // await keyroom.say(content)
-                    }
+                    setTimeout(async()=>{
+                        let keyroom = await Room.find({topic: grps[a]});
+                        if (keyroom) {
+                            await keyroom.say(ct);
+                        }
+                    },3000);
                 }
-                // let keyroom = await Room.find({topic: "test333"})
-                // if (keyroom) {
-                //     await keyroom.say("Remove from the room", contact)
-                //     await keyroom.del(contact)
-                // }
             }
         })
         .start();
 
 
     /**
-     * 启动服务器，实时监听应用服务器发来的事件。
+     * 启动ws客户端
+     * 技术参考：https://socket.io/docs/client-api/#io-protocol
+     *
      * 事件类别：
      * 1、系统运行状态、预警
      * 2、业务事件（新用户访问、老用户）
@@ -240,40 +215,40 @@ try {
      * 3、微信
      * 4、公众号
      * 5、服务号
-     *
-     * 技术参考：https://socket.io/docs/server-api/
      */
 
-    let server = require('http').createServer();
-    let  io = require('socket.io')(server);
-    io.on('connection', function(client){
+    const io = require('socket.io-client');
+    let url = cf.wsserver;
 
-        console.log('receive connection.....')
+    console.log('连接到服务器' + url, 'io.protocol:' + io.protocol);
+    let socket = io(url);
 
-        client.on('message', async function(data){
-            console.log('receive message:',data);
-
-            //向指定的群发送信息信息指定的信息
-            let room = await Room.find({topic: "test333"});
-            await room.say(data);
-
-            //向指定的好友昵称发送消息
-        });
-
-        client.on('disconnecting', (reason) => {
-            let rooms = Object.keys(client.rooms);
-            console.log('disconnecting reason :',reason,'rooms:',rooms)
-            // ...
-        });
-        client.on('disconnect', (reason)=>{
-            console.log(' disconnect reason :',reason);
-        });
+    socket.on('connect', () => {
+        console.log('连接成功socket.id:' + socket.id);
+        global.socket = socket;
     });
-    server.listen(3000);
-
-
-
-
+    socket.on('connect_error', (error) => {
+        console.log('连接错误:' + error);
+    });
+    socket.on('connect_timeout', (timeout) => {
+        console.log('连接超时:', timeout);
+    });
+    socket.on('error', (error) => {
+        console.log('连接异常:', error);
+    });
+    socket.on('disconnect', function () {
+        console.log('连接断开 disconnect');
+    });
+    socket.on('event', async function (data) {
+        console.log('收到event事件', data,typeof(data),data.rule.room.toString());
+        //向指定的群发送信息信息指定的信息
+        let room = await Room.find({topic:data.rule.room.toString()});
+        if(room){
+            await room.say(data.rule.desc+'\n'+JSON.stringify(data.data));
+        }else{
+            console.warn('未找到名为'+data.rule.room+'的群，请确认该群是否存在。')
+        }
+    });
 } catch (e) {
     console.error('发生异常', e);
 }
@@ -288,14 +263,12 @@ async function manageRoom() {
      * Find Room
      */
     try {
-
         const room = await  Room.find({topic: "测试群123"});
         if (room) {
             await room.say('wechaty已启动');
         } else {
             console.warn("【测试群123】尚未建立，请建立该群，以便接收通知");
         }
-
 
         /**
          * 定时读取配置文件
@@ -306,8 +279,6 @@ async function manageRoom() {
          * 3、从第三方获取数据，给指定群发送
          */
         setInterval(() => {
-
-
             /**
              * 给指定的群发通知
              * 1、按时间通知
@@ -332,8 +303,7 @@ async function manageRoom() {
                             await room.say(item.content);
 
                             //todo:如果有handler的配置信息，则执行对应的xxxHandler函数，将并将函数的处理结果作为参数
-                            if(item.handler)
-                            {
+                            if (item.handler) {
                                 console.log('包涵处理函数，执行处理函数');
                                 let handler = eval(item.handler);
                                 handler(room);
@@ -344,8 +314,6 @@ async function manageRoom() {
             });
 
 
-
-
             /**
              * 刷新配置信息：
              * 算法：
@@ -354,25 +322,21 @@ async function manageRoom() {
              * 3、校验配置文件的规则
              */
             fileContent = ut.rf('./rms.json');
-
             cfg = eval("(" + fileContent + ")");//将配置信息转换成对象
-
-            //刷新配置的间隔时间
-            interval = cfg.cfg.interval * 1000;
-
-            //通知类配置
+            cf = cfg.cfg;
+            //刷新各个配置参数
+            interval = (cf.interval || 15) * 1000; //配置刷新的间隔时间
+            writefile= cf.writefile||false;
+            debug = cf.debug||false;
             tasks = ut.getAlerts(cfg.rms);
             //当任务列表不空，且配置规则为定时显示时，才在日志中输出任务列表
-            (tasks.length !== 0 && cfg.cfg.showInterval) ? console.log(ut.getNow() + ':刷新任务列表:'+typeof(cfg.cfg.showInterval), tasks, cfg.cfg) : '';
-            //console.log(4,tasks.length,cfg.cfg.showInterval,cfg);
+            (tasks.length !== 0 && cf.showInterval) ? console.log(ut.getNow() + ':刷新任务列表:' + typeof(cfg.cfg.showInterval), tasks, cfg.cfg) : '';
 
             //转发类配置
-            forward = cfg.cfg.forward;
-            if(!ut.isValidForword(forward)){ //校验主持、收听有关的群名是否合法。
+            forward = cf.forward;
+            if (!ut.isValidForword(forward)) { //校验主持、收听有关的群名是否合法。
                 console.error('请修改配置');
             }
-
-
 
         }, interval);
 
@@ -448,7 +412,7 @@ async function weatherForcast(rm) {
     console.log('哈哈，this is weatherForcast');
 
     //对群发送消息
-    await ut.getWeather((result)=>{
+    await ut.getWeather((result) => {
         rm.say(result);
     });
 }
@@ -469,13 +433,34 @@ async function rqstWatcher(rm) {
         assert.equal(null, err);
         let collection = db.collection('rqst'); //哪个表
 
-        collection.find({rdst:'1'} ).toArray(async function (err, result) {
+        collection.find({rdst: '1'}).toArray(async function (err, result) {
             assert.equal(null, err);
 
-            console.log('记录条数=============================',result.length);
+            console.log('记录条数=============================', result.length);
             await rm.say('完成查询' + result.length + '条');
             db.close();
 
+        });
+    });
+}
+
+async function approveLbor(openId) {
+
+    console.log('哈哈，this is rqstWatcher');
+
+    let assert = require('assert');
+    let MongoClient = require('mongodb').MongoClient;
+
+    MongoClient.connect(cf.dburl, function (err, db) {
+        assert.equal(null, err);
+        let collection = db.collection('rqst'); //哪个表
+
+        collection.find({rdst: '1'}).toArray(async function (err, result) {
+            assert.equal(null, err);
+
+            console.log('记录条数=============================', result.length);
+            await rm.say('完成查询' + result.length + '条');
+            db.close();
         });
     });
 }

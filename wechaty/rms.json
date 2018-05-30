@@ -3,14 +3,20 @@
 		showInterval: false,//是否输出配置信息
 		interval: 15,//输出配置信息的间隔时间
 		filepath: 'd:\\log\\',//附件、图片保存的路径
+		writefile: false,//是否将内容写入文件
+		debug:true,	//是否输出log
 		logfilename:'wclog-',//日志文件名前缀
 		forward:[		//从某个群收到的消息转发到另一个群，类似订阅
-			{from:'200弄',to:['测试群123','测试2']},//
+			//{from:'200弄',to:['测试群123','测试2']},//
 			{from:'三(6)班不聊群',to:['200弄不聊群']},
 			{from:'太阳花成长讨论区',to:['200弄不聊群']},
-			{from:'测试群123',to:['test333']},
+			{from:'Y5004 Fittime 7天减脂营/5.28',to:['200弄健康群']},
 		],
 		dburl: 'mongodb://100td:27117/zgdev',
+		wsserver:'http://localhost:80',
+		wsserver:'https://86316533.qstarxcx.com/',
+		multicastGroups:['zg体验用户群','test333'],
+		
 		
 	},
 	rms: [
@@ -143,7 +149,7 @@
 		groups: ['何为渠道'],
 	},
 	
-	//莞馨家政
+	//莞馨家政-阿姨群。TODO:邀请新的供应商，提醒更新空闲时段。
 	{
 		contents: [{
 			timer: '1049',
@@ -175,5 +181,38 @@
 		],
 		groups: ['贴心小猪陈老师15000384198'],
 	},
+	//莞馨家政-客户群。TODO:提醒预约阿姨时间
+	{
+		contents: [{
+			timer: '1049',
+			from: '2018/03/23',
+			to: '2022/04/19',
+			frequence: {
+				dayOfWeek: ['2','3','5'],
+				dateOfMonth: [],
+			},
+			content: '东园二村有床位出租，有网线，空调，干净整洁，出行方便，四人间。需要的美女请联系陈老师15000384198'
+		},
+		{
+			timer: '1400',
+			from: '2018/03/23',
+			to: '2022/04/19',
+			frequence: {
+				dayOfWeek: ['5'],
+				dateOfMonth: [],
+			},
+			content: '亲们明，请大家把自己周末的空闲时段和所在小区发给我，给大家找零活啦！'
+		},
+		{
+			timer: '2100',
+			from: '2018/03/23',
+			to: '2019/05/19',
+			content: '天气预报：',
+			handler: 'weatherForcast'
+		},
+		],
+		groups: ['贴心小猪陈老师15000384198'],
+	},
+		
 	]
 }
