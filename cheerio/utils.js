@@ -56,7 +56,7 @@ exports.getCfmDisct2 = function(size,floor,tprice,bdyear,subway,direction){
     let subwayDisct = 0.98;
 
     let distance = subway.substring(subway.indexOf('站') + 1, subway.length).replace('米', '');
-    if (Number(distance) > 1200)
+    if (Number(distance) <= 1200)
         subwayDisct = 1;
 
 
