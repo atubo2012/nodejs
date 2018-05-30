@@ -42,9 +42,24 @@ function fmd(date, style) {
  * @param floor 楼层 2位数值型
  * @param tprice 总价（单位万） 数值型
  * @param bdyear 建造年份 4位数值型
+ * @param subway 地铁距离 4位数值型
+ * @param direction 朝向 4位数值型
  */
 
-exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
+exports.getCfmDisct2 = function(size,floor,tprice,bdyear,subway,direction){
+
+    let directionDisct = 0.98;
+    if(direction==='南'||direction==='南 北' ){
+        directionDisct = 1
+    }
+
+    let subwayDisct = 0.98;
+
+    let distance = subway.substring(subway.indexOf('站') + 1, subway.length).replace('米', '');
+    if (Number(distance) > 1200)
+        subwayDisct = 1;
+
+
 
     let sizeDisct = 1;
     if(size>150 && size<=200){
@@ -95,11 +110,18 @@ exports.getCfmDisct2 = function(size,floor,tprice,bdyear){
         bdyearDisct = 0.98;
     }
 
-    let cfmd = (sizeDisct.toFixed(2)*tpriceDisct.toFixed(2)*floorDisct.toFixed(2)*bdyearDisct.toFixed(2)).toFixed(3);
+    let cfmd = (
+        sizeDisct.toFixed(2)*
+        tpriceDisct.toFixed(2)*
+        floorDisct.toFixed(2)*
+        bdyearDisct.toFixed(2)*
+        subwayDisct.toFixed(2)*
+        directionDisct.toFixed(2)
+    ).toFixed(3);
+
     cfmd =Math.round(cfmd *100)/100; //最低折扣
-    //console.log(floortype+'-'+floor+':'+floorDisct*10+'折');
-    //console.log('核定折扣:'+cfmd);
-    return {'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'bdyeard':bdyearDisct,'cfmd':cfmd};
+
+    return {'subwayd':subwayDisct,'drctd':directionDisct,'sized':sizeDisct,'tpriced':tpriceDisct,'floord':floorDisct,'bdyeard':bdyearDisct,'cfmd':cfmd};
 
 };
 

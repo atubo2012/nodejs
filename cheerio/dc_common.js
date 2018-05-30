@@ -518,8 +518,19 @@ function esfPaser(html, dataProcessor) {
             ds: gDsName       //数据源：链家
         };
 
+        //获取地铁距离信息，为计算折扣准备
+        let subwayInfo = esfInfo.tags.filter(function (item,index,arrs) {
+            if(item.subway) return item.subway;
+        });
+        subwayInfo = subwayInfo.length===1?subwayInfo[0]['subway']:'';
+
+
         //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
-        let cfmDisct = ut.getCfmDisct2(esfInfo.size, esfInfo.floor, esfInfo.tprice, esfInfo.bdyear);
+        let cfmDisct = ut.getCfmDisct2(
+            esfInfo.size, esfInfo.floor, esfInfo.tprice, esfInfo.bdyear,
+            subwayInfo,
+            esfInfo.drct
+        );
 
         //将核定折价率合并到房源信息中。
         esfInfo = Object.assign(esfInfo, cfmDisct);
