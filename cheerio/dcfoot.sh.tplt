@@ -1,7 +1,7 @@
 
 
 node dc_common.js setap {city}.
-node dc_common.js mccfmd {city}.
+//node dc_common.js mccfmd {city}.
 node dc_common.js expdata {city}.
 
 echo "发送通知"
