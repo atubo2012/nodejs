@@ -103,7 +103,8 @@ try {
                 if (m instanceof MediaMessage) {
                     const rowFileName = await ut.normalizeFileName(m.filename());
                     attFileName = fn + '-' + ut.getToday() + '-' + rowFileName.replace('.url', '.html');
-                    await m.saveFile(attFileName);
+
+                    writefile ? await m.saveFile(attFileName) :'';
                     //await console.log(`${m.mimeType()}`);
                 }
                 writefile ? ut.wf(fn + '.txt', `${ct} \n`):'';
@@ -263,11 +264,11 @@ async function manageRoom() {
      * Find Room
      */
     try {
-        const room = await  Room.find({topic: "测试群123"});
+        const room = await  Room.find({topic: cf.manageRoom});
         if (room) {
-            await room.say('wechaty已启动');
+            await room.say('wechaty已启动。'+new Date());
         } else {
-            console.warn("【测试群123】尚未建立，请建立该群，以便接收通知");
+            console.warn("【"+cf.manageRoom+"】尚未建立，请建立该群，以便接收通知");
         }
 
         /**
