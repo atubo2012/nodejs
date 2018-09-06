@@ -72,7 +72,6 @@ function main() {
                     } else {
                         dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/co32' + gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
                     }
-
                 }
 
             } else if ('getdist' === _instruct) {
@@ -103,9 +102,12 @@ function main() {
                 ut.showLog('开始导出数据......');
                 export2xls(cf.cDburl, gDsName + 'esf');
 
-            } else if ('expjjr' === _instruct) {
+            } else if ('save2bamboo'===_instruct){
+                ut.showLog('开始保存笋盘结果数据......');
+                save2bamboo(cf.cDburl,gDsName + 'esf')
+            }else if ('expjjr' === _instruct) {
                 ut.showLog('开始导出数据......');
-                exportBroker2()
+                exportBroker2();
 
             } else {
                 ut.showLog(_instruct + '不是合法的指令，合法的指令包括：dczone|dcesf|setap|mccmfd|expdata');
@@ -1055,6 +1057,7 @@ function export2xls(dburl, tbname) {
 
                 if (i === result.length - 1) {
                     ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday());
+                    dbut.save2db(tbname+'_result',data_content,cf.cDburl);
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
@@ -1063,26 +1066,62 @@ function export2xls(dburl, tbname) {
     });
 }
 
-//
-// function exportBroker() {
-//     dbut.findFromDb2(gDsName + 'jjr', {}, cf.jjrFieldsValue, 50000, cf.cDburl,
-//         function (docs, db) {
-//
-//             docs.forEach(function (item, index, arr) {
-//
-//                 let keys = Object.keys(cf.jjrFieldsValue);
-//                 keys.shift();//删除_id字段
-//
-//                 //将自身的值替换掉，而不是在forEach外再创建一个新的数组，逐个push进去。
-//                 docs[index] = ut.obj2ArrayByOrder(item, keys)
-//             });
-//
-//             docs.unshift(cf.jjrFieldsName);//追加列名
-//
-//             ut.exp2xls(docs, cf.cExlExpPath, gDsName + 'jjr-' + ut.getToday());
-//         }
-//     )
-// }
+function save2bamboo(dburl, tbname) {
+
+    let MongoClient = require('mongodb').MongoClient;
+    MongoClient.connect(dburl, function (err, db) {
+
+        ut.showLog('开始连接DB');
+        selectData3(db, tbname, function (result) {
+
+            //ut.showLog(JSON.stringify(result));
+            let data_content = [];
+            data_content.push(cf.cEsfFieldsName2);  //第一行是Excel表头，可以在这里手工定制
+
+
+            ut.showLog('开始组装bamboo数据' + result.length);
+            for (let i = 0; i < result.length; i++) {
+                let esf = result[i];
+
+
+                //只导出笋值小于阀值的数据和存在异常的数据
+                if (esf['bsr'] <= cf.bsrLessThen || isNaN(esf['bsr'])) {
+                    //将每条房源的各个字段信息转换成数组，组装成一条房源记录
+                    let record = {};
+
+                    //根据配置的列名顺序来组装导出每一条要导出的数据
+                    let fieldNameList = Object.keys(cf.cEsfFields2);
+                    for (let j = 1; j < fieldNameList.length; j++) {
+                        let fieldName = fieldNameList[j];
+                        //if (fieldName === 'bsr' && esf[fieldName]!== null) {
+                        if (fieldName === 'bsr') {
+                            if (esf[fieldName] === null) {
+                                ut.showLog('以下笋度值未空，建议排查原因:');
+                                ut.showLog(JSON.stringify(esf));
+                            }
+                            else {
+                                esf[fieldName] = esf[fieldName].toFixed(2);
+                            }
+                        }
+                        record[fieldName]=esf[fieldName];
+                    }
+                    //将单条房源记录加入到所有记录中
+                    data_content.push(record);
+                }
+
+                //console.log(data_content);
+
+                if (i === result.length - 1) {
+                    console.log('',typeof(data_content),data_content.length);
+                    dbut.save2db(tbname+'_result',data_content,cf.cDburl);
+                }
+            }
+            db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
+
+        });
+    });
+}
+
 
 /**
  * 导出经纪人信息。
