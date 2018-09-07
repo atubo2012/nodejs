@@ -1076,7 +1076,7 @@ function save2bamboo(dburl, tbname) {
 
             //ut.showLog(JSON.stringify(result));
             let data_content = [];
-            data_content.push(cf.cEsfFieldsName2);  //第一行是Excel表头，可以在这里手工定制
+            //data_content.push(cf.cEsfFieldsName2);  //第一行是Excel表头，可以在这里手工定制
 
 
             ut.showLog('开始组装bamboo数据' + result.length);
