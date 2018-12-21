@@ -8,6 +8,7 @@ let config = {
     //数据库参数
     //cDburl:'mongodb://100td:27117/pspdb',
     cDburl: 'mongodb://100td:27117/test2',
+    //cDburl: 'mongodb://dev.qstarnet.com:27117/test2',
     cMaxListener: 300,  //最大的监听器数量，避免“11 uncaughtException listeners added”报错。
     cMaxRcd: 80000,//dbutil中一次性检索出来的最多的记录数
 
@@ -36,7 +37,10 @@ let config = {
     cExlExpPath: './',
 
     //excel导出时的列名
-    cEsfFieldsName2: ['笋度', '看', '关', '挂', '新上', '区', '板', '小区',
+    cEsfFieldsName2: ['笋度', '看', '关', '挂',
+        //'新上',
+        '区', '板', '小区',
+        '朝向','折率','地铁折率',
         '年份', '年份折率', '楼层', '楼层折率', '面积', '面积折率',
         '小区单价', '房源单价', '核定单价', '综合折率',
         '总价', '总价折率', '房型', '标题', 'URL'],
@@ -46,10 +50,14 @@ let config = {
         seeamt: 1,
         favamt: 1,
         asktime: 1,
-        isnew: 1,
+        //isnew: 1,
         sdist: 1,
         zone: 1,
         hrname: 1,
+
+        drct: 1,
+        drctd: 1,
+        subwayd: 1,
 
         bdyear: 1,
         bdyeard: 1,
@@ -70,7 +78,7 @@ let config = {
         url: 1
     },
     expConditions: [
-        {isnew: '新上'},
+   //     {isnew: '新上'},
    //     {asktime: '刚刚发布'},
         {hrap: {$gt: 0}},//该条件必须存在，因为有些小区的均价为0，如该条件不存在则可能出现导出失败
         {size: {$gt: 40}},
