@@ -57,7 +57,7 @@ function collectData(protocal,siteUrl, pageUrl, htmlPaser, dataProcessor, maxPag
             });
 
             res.on('end', function () {
-                let decodedContent = iconv.decode(Buffer.concat(chunks), 'utf-8');
+                let decodedContent = iconv.decode(Buffer.concat(chunks),process.env.PARSEENCODE||'utf-8');
 
                 //总采集页数减1
                 maxPageAmt = maxPageAmt - 1;
