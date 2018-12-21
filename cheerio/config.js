@@ -96,7 +96,7 @@ let config = {
         'sz': {exclude:[],},
         'tj': {exclude:[],},
         'su': {exclude:[],},
-        'bj': {exclude:[],},
+        'bj': {exclude:['昌平','大兴'],},
     },
     dss: { //数据源
         'zy': {
@@ -128,7 +128,36 @@ let config = {
                 {$and: [{looked: {$gte: 15}}, {sell: {$gte: 15}}]}, //头部的jjr
                 {$and: [{looked: {$eq: 0}}, {sell: {$eq: 0}}]},
             ]
+        },
+
+    //租售比导出的字段
+    cRentFieldsValue: {
+        _id: 0,
+        rsr: {$divide: ['$ruprice','$uprice']},
+
+        dist:1,
+        zone:1,
+        hrname: 1,
+        uprice: 1,
+        saleamt:1,
+        rentamt:1,
+
+
+        ruprice:1,
+        rent_amt:1,
+        total_size:1,
+        total_price:1,
+        url:1,
+        updt:1,
+    },
+    cRentConditions:[
+        {
+            ruprice: {$gt: 0},//仅显示租金>0的房源
+            uprice:{$gt: 0},
         }
+    ],
+    cRentSortBy: {rsr: 1},//按租售比倒序排列
+
 };
 
 module.exports = config;

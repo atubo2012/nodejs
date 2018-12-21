@@ -24,12 +24,40 @@ let gDistricts = [];        //城市的行政区列表和区内的板块列表
 let gPostConds = cf.iclParkInfo ? '' : 'ng1hu1/';  //根据参数来控制是否包含车位
 
 
+
+
+let gTotalRent = [];        //所有租赁房源记录
+let MongoClient = require('mongodb').MongoClient;
+let assert = require('assert');
+let gPreCondsRent = 'rco11';  //必须指定
+let gHrs = null;
+let gHrid = '';
+
 main();
+
+function loadHrs(cb){
+
+    let a = 'aa';
+
+    if(!gHrs){
+        dbut.findFromDb(gDsName+'zone',{},20000,cf.cDburl,(results,db)=>{
+            results.map((item,index,arr)=>{
+                gHrs[item.hrnum]=item;
+            });
+            cb();
+        });
+    }
+    else{
+        console.log('adafsdfsf')
+    }
+}
 
 function main() {
 
     try {
         process.setMaxListeners(cf.cMaxListener);
+
+
 
         //截取出应用程序的参数。process.argv的前两个元素为：args[0]:node，args[1]:程序文件.js
         let args = process.argv.splice(2);
@@ -38,6 +66,7 @@ function main() {
         if (args.length < 2) {
             console.error('应指定指令名参数，如：node dc_common.js dczone sh.taopu');
         } else {
+
             //解析城市和板块参数
             let cityAndZone = args[1].split('.');
             gCity = cityAndZone[0]; //区分不同的城市、库表名
@@ -48,20 +77,14 @@ function main() {
             }
 
 
-            //根据运行时的参数，设置url和数据库名
+            //根据运行时的参数，设置全局参数：城市、板块、数据源
             gSiteUrl = gSiteUrl.replace('{}', gCity);
             gDsName = 'lj' + gCity;
             console.log(gCity, gZone);
 
-            if ('dchr' === _instruct) {
-                if (gZone === undefined) {
-                    ut.showLog('未指定板块名，应指定板块名！');
-                } else {
-                    ut.showLog('开始采集小区......');
-                    dc.dcs(gSiteUrl, '/xiaoqu/' + gZone + '/', hrPaser, hrDp, cf.cMaxPageNum);
-                }
 
-            } else if ('dcesf' === _instruct) {
+            //二手房采集
+            if ('dcesf' === _instruct) {
                 if (gZone === undefined) {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
@@ -73,43 +96,87 @@ function main() {
                         dc.dcs(gSiteUrl, '/ershoufang/' + gZone + '/co32' + gPostConds, esfPaser, esfDp, cf.cMaxPageNum);
                     }
                 }
+            } else if ('setap' === _instruct) {
+                ut.showLog('开始设置二手房的均价......');
+                dbut.findFromDb(gDsName + 'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
+            } else if ('mccfmd' === _instruct) {
+                ut.showLog('开始计算二手房的折扣率......');
+                dbut.findFromDb(gDsName + 'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
+            } else if ('expdata' === _instruct) {
+                ut.showLog('开始导出数据......');
+                export2xls(cf.cDburl, gDsName + 'esf');
+            }else if ('save2bamboo'===_instruct){
+                ut.showLog('开始保存笋盘结果数据......');
+                save2bamboo(cf.cDburl,gDsName + 'esf')
+            }
 
-            } else if ('getdist' === _instruct) {
+
+            //租赁房采集
+            else if ('dcesfrent' === _instruct) {
+                let cityAndZone = args[1].split('.');
+                gCity = cityAndZone[0]; //区分不同的城市、库表名
+                gHrid = cityAndZone[1]; //区分不同的板块
+                if (typeof(cf.cities[gCity]) === 'undefined') {
+                    console.error('请在config.js中cities属性中设置[' + gCity + ']对应的入口');
+                    return;
+                }
+                if (gHrid === undefined) {
+                    ut.showLog('未指定板块名，应指定板块名！');
+                } else {
+                    ut.showLog('开始采集租赁房......');
+                     // loadHrs(()=>{
+                     //     dc.dcs(gSiteUrl, '/zufang/'+gPreCondsRent+'c'+gHrid+'/' , esfPaserRent, rentDp, cf.cMaxPageNum);
+                     // });
+                    dc.dcs(gSiteUrl, '/zufang/'+gPreCondsRent+'c'+gHrid+'/' , esfPaserRent, rentDp, cf.cMaxPageNum);
+                }
+            }else if ('gen_rsr_of_zone' === _instruct) {
+                ut.showLog('开始生成租售比信息......');
+                let cityAndHr = args[1].split('.');
+                gCity = cityAndHr[0]; //区分不同的城市、库表名
+                gHrid = cityAndHr[1];
+                //genRsrOfZone();
+                genRsrOfHr();
+
+            }else if ('save_rent_rsr' === _instruct) {
+                ut.showLog('开始保存租售比信息到单独的表......');
+                let cityAndZone = args[1].split('.');
+                gCity = cityAndZone[0]; //区分不同的城市、库表名
+                saveRentRsr();
+            }else if ('genrentscript' === _instruct) {
+                ut.showLog('开始生成租房采集执行脚本......');
+                genRentScript3();
+            }
+
+            //小区、行政区采集
+            else if ('getdist' === _instruct) {
                 ut.showLog('开始解析和生成板块信息......');
-                ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
                 dc.dcs(gSiteUrl, '/ershoufang/', distPaser, dcZones, cf.cMaxPageNum);
 
             } else if ('getdistall' === _instruct) {
                 ut.showLog('生成各城市的采集脚本......');
                 ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
                 getDistAll();
+            }else if ('dchr' === _instruct) {
+                if (gZone === undefined) {
+                    ut.showLog('未指定板块名，应指定板块名！');
+                } else {
+                    ut.showLog('开始采集小区......,cro11按成交量顺序');
+                    dc.dcs(gSiteUrl, '/xiaoqu/' + gZone + '/cro11/', hrPaser, hrDp, cf.cMaxPageNum);
+                }
+            }
 
-            } else if ('getbroker' === _instruct) {
-                ut.showLog('开始解析和经纪人信息......');
-                ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
-                dc.dcs(gSiteUrl, '/jingjiren/' + gZone + '/ao22/', brokerPaser, brokerDp, cf.cMaxPageNum);
 
-            } else if ('setap' === _instruct) {
-                ut.showLog('开始设置二手房的均价......');
-                dbut.findFromDb(gDsName + 'zone', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfAvgPrice);
-
-            } else if ('mccfmd' === _instruct) {
-
-                ut.showLog('开始计算二手房的折扣率......');
-                dbut.findFromDb(gDsName + 'esf', {cd: ut.getToday()}, cf.cMaxRcd, cf.cDburl, setEsfDisct);
-
-            } else if ('expdata' === _instruct) {
-                ut.showLog('开始导出数据......');
-                export2xls(cf.cDburl, gDsName + 'esf');
-
-            } else if ('save2bamboo'===_instruct){
-                ut.showLog('开始保存笋盘结果数据......');
-                save2bamboo(cf.cDburl,gDsName + 'esf')
-            }else if ('expjjr' === _instruct) {
+            //经纪人采集
+            else if ('expjjr' === _instruct) {
                 ut.showLog('开始导出数据......');
                 exportBroker2();
 
-            } else {
+            }else if ('getbroker' === _instruct) {
+                ut.showLog('开始解析和经纪人信息......');
+                //ao22成交量从高到低
+                dc.dcs(gSiteUrl, '/jingjiren/' + gZone + '/ao22/', brokerPaser, brokerDp, cf.cMaxPageNum);
+            }
+            else {
                 ut.showLog(_instruct + '不是合法的指令，合法的指令包括：dczone|dcesf|setap|mccmfd|expdata');
             }
         }
@@ -145,6 +212,79 @@ function  getDistAll (){
         cmd +=gCmd+' getdist '+item+'. \n';
     });
     ut.wf('get_dist_all'+gFilePostFix,cmd);
+}
+
+/**
+ * 查询
+ */
+function  genRentScript (){
+    let cmd = '\n';
+    //获取所有小区的编号和名字列表
+    dbut.findFromDb(gDsName+'zone',{},300,cf.cDburl,(hrs,db)=>{
+        hrs.map((item,index,arr)=>{
+            cmd +=gCmd+'  dcesfrent '+gCity+'.'+item.url.replace(gSiteUrl+'/xiaoqu/','').replace('/','')+' \n';
+        });
+        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+
+        //生成采集所有小区租赁信息的脚本
+        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+    });
+}
+function  genRentScript2 (){
+    let cmd = '\n';
+    //获取所有小区的编号和名字列表
+    console.log('开始生成租赁房采集脚本......')
+    dbut.findFromDb(gDsName+'dist',{},2000,cf.cDburl,(dists,db)=>{
+
+        let leftCounter = 0;
+
+        dists.map((dist,index1,arr1)=>{
+            dist.zones.map((zone,index2,arr2)=> {
+                leftCounter++;
+            });
+        });
+
+        dists.map((dist,index1,arr1)=>{
+            dist.zones.map((zone,index2,arr2)=> {
+                let zone_code = zone.url.replace('/ershoufang/','').replace('/','');
+                cmd += gCmd + '  dcesfrent '        + gCity + '.' + zone_code+' \n';
+                cmd += gCmd + '  gen_rsr_of_zone '  + gCity + '.' + zone_code+' \n';
+                cmd += 'echo '+ (--leftCounter)+' \n';
+            });
+        });
+        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+
+        //生成采集所有小区租赁信息的脚本
+        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+        console.log('完成');
+    });
+}
+
+function  genRentScript3 (){
+    let cmd = '\n';
+    //获取所有小区的编号和名字列表
+    console.log('开始生成租赁房采集脚本......');
+    dbut.findFromDb(gDsName+'zone',{},30000,cf.cDburl,(hrs,db)=>{
+
+        let leftCounter = hrs.length;
+
+        hrs.map((item,index,arr1)=> {
+
+            if (Number(item.rentamt.replace('套正在出租', '')) > 0) {
+                let hrid = item.url.replace(gSiteUrl + '/xiaoqu/', '').replace('/', '');
+                cmd += gCmd + '  dcesfrent ' + gCity + '.' + hrid + ' \n';
+                cmd += gCmd + '  gen_rsr_of_zone ' + gCity + '.' + hrid + ' \n';
+                cmd += 'echo ' + (--leftCounter) + ' \n';
+            } else {
+                console.log(item.hrname+' 没有租赁房源 '+item.url);
+            }
+        });
+        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+
+        //生成采集所有小区租赁信息的脚本
+        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+        console.log('完成');
+    });
 }
 
 
@@ -279,6 +419,7 @@ function hrPaser(html, dataProcessor) {
         let sellAndRent = dblk.text();
         let _sellAmt = sellAndRent.split('|')[0].trim();
         let _rentAmt = sellAndRent.split('|')[1].trim();
+        let _rentAmt2 = Number(_rentAmt.replace('套正在出租',''));
 
         dblk = zone.find('div.positionInfo');
         let positonInfo = dblk.text().split('/');
@@ -295,7 +436,7 @@ function hrPaser(html, dataProcessor) {
 
 
         dblk = zone.find('a.totalSellCount');
-        let _saleAmt = dblk.find('span').text();
+        let _saleAmt = Number(dblk.find('span').text());
         let _esfUrl = dblk.attr('href');
 
 
@@ -318,6 +459,7 @@ function hrPaser(html, dataProcessor) {
             uprice: _uprice,    //均价
             sellamt: _sellAmt,  //已售数量
             rentamt: _rentAmt,  //在租数量
+            rentamt2:_rentAmt2, //正在出租的量化值
             saleamt: _saleAmt,   //在售数量
             dist: _dist,
             zone: _zone,         //板块
@@ -356,6 +498,274 @@ function hrPaser(html, dataProcessor) {
 
 
 }
+
+
+function esfPaserRent(html, dataProcessor) {
+
+    //console.log(html); //若网站内容发生改版了，则可以取消注释本行代码，查看实际页面应答结果的内容
+
+     let nextPageUrl = '';
+
+    //加载页面内容
+     let $ = cheerio.load(html);
+
+
+    //基于上级节点(div.content__list)定位列表中的每一条记录的节点，在遍历每条记录的过程中解析数据，生成数组
+    let lc = $('div.content__list--item', 'div.content__list');
+    console.log(lc.length);
+    if(!lc||lc.length===0){
+        console.log(gHrid+'小区内没有租赁房源');
+        return '';
+    }
+
+
+     lc.each(function () {
+         let esf = $(this);  //每条记录
+
+         let dblk = esf.find('p.content__list--item--title.twoline').find('a');
+         let _title = dblk.text().trim(); //标题
+         let _url = dblk.attr('href');//url
+         let _hrurl = gSiteUrl+'/'+gHrid+'/'; //小区url
+
+
+         dblk = esf.find('p.content__list--item--des');
+         let desc = dblk.text().trim().split('/');
+         let _drct      = desc[0].trim().split('-')[0];
+         let _zone    = desc[0].trim().split('-')[1];
+         let _size      = Number(desc[1].trim().replace('㎡',''));
+         let _layout    = desc[3].trim();
+
+         let _hrnum = gHrid;    //由命令行参数提供
+
+
+
+         dblk = esf.find('p.content__list--item--brand.oneline');
+         let _source = dblk.text().trim();
+
+
+         dblk = esf.find('p.content__list--item--time.oneline');
+         let _time = dblk.text();
+
+
+         //TODO:优化tags解析方法
+         // dblk = esf.find('p.content__list--item--bottom.oneline');
+         // let _tags = $('i',dblk);
+         // let tl = _tags.length;
+         // let keys = Object.keys(_tags);
+
+
+         dblk = esf.find('span.content__list--item-price');
+         let _rprice = $('em',dblk).text();
+         _rprice = Number(_rprice);
+
+         let rentInfo = {
+             title:_title,
+             rprice : _rprice,
+             size:_size,
+             urprice : Number((((_rprice*100)/_size)/100).toFixed(2)),
+             hrurl : _hrurl,
+             url:_url,
+             hrnum:_hrnum,
+             zone:_zone,
+             drct:_drct,
+             layout:_layout,
+             source:_source,
+             time:_time,
+             //zone_code:gHrs[_hrnum].zone
+         };
+
+         gTotalRent.push(rentInfo);
+
+
+         /**
+          * 采集每套租赁房源的租金、面积，保存到数组中
+          * 在采集完成后，遍历数组，将总金额/总面积，得到每平米的租金
+          * 将每平米租金*12即得到该小区每平米的每年的现金流
+          * 将年现金流更新到该小区的记录中
+          *
+          * 创建一个查询，计算：租售比=（每平米年现金流/单价），按照租售比降序排列
+          * 显示小区名、板块、行政区、租售比
+          * @type {number}
+          */
+
+         let a = 1;
+    //     _isNew = (_isNew === '新上') ? _isNew : '';
+    //
+    //
+    //
+    //     //非别墅房型的新系列：华松小区 | 2室1厅 | 59.6平米 | 南 | 简装 | 无电梯
+    //     let _layout = tmp[startIndex++].trim(); //房型
+    //     let _size = Number(tmp[startIndex++].trim().replace('平米', '')); //面积
+    //     let _drct = tmp[startIndex++]; //朝向，有可能为空
+    //     if (undefined === _drct) {
+    //         _drct = '[未填]';
+    //     } else {
+    //         _drct = _drct.trim();
+    //     }
+    //     let _deco = tmp[startIndex]; //装修
+    //
+    //     let _elvt = '';     //电梯，有可能为空
+    //     if (tmp.length < 6) {
+    //         //console.log('数据项少于6 :'+tmp.length,tmp,_url);
+    //     } else {
+    //         _elvt = tmp[5];//电梯
+    //     }
+    //
+    //
+    //     dblk = esf.find('.houseInfo').find('a');
+    //
+    //     let _hrurl = dblk.attr('href'); //小区链接
+    //
+    //
+    //     dblk = esf.find('.positionInfo');
+    //     tmp = dblk.text().split('-');
+    //     let pt1 = tmp[0].trim();
+    //
+    //     let _floor = '';
+    //     let _bdyear = '[未填]';
+    //
+    //
+    //     if (_layout.indexOf('别墅') >= 0) {
+    //         _floor = pt1.substring(0, pt1.indexOf('层') + 1);
+    //         if (pt1.indexOf('年建') >= 0) {
+    //             _bdyear = pt1.substring(pt1.indexOf('层') + 1, pt1.indexOf('年建'));
+    //             _type = pt1.substring(pt1.indexOf('建') + 1);
+    //         } else {
+    //             _type = pt1.substring(pt1.indexOf('层') + 1);
+    //         }
+    //     } else {
+    //         _floor = pt1.substring(0, pt1.indexOf(')') + 1); //楼层
+    //         if (pt1.indexOf('年建') >= 0) {
+    //             _bdyear = pt1.substring(pt1.indexOf(')') + 1, pt1.indexOf('年建'));
+    //             _type = pt1.substring(pt1.indexOf('建') + 1);
+    //         } else {
+    //             _type = pt1.substring(pt1.indexOf(')') + 1);
+    //         }
+    //     }
+    //
+    //
+    //     let _zone = tmp[1].trim();
+    //     let _zoneurl = $('a', dblk).attr('href');
+    //
+    //
+    //     dblk = esf.find('.followInfo');
+    //     tmp = dblk.text().split('/');
+    //     let _favAmt = Number(tmp[0].replace('人关注', '').trim());
+    //     let _seeAmt = Number(tmp[1].replace('共', '').replace('次带看', '').trim());
+    //     let _askTime = tmp[2].replace('以前发布', '').trim();
+    //
+    //
+    //     let _tags = [];
+    //     dblk = esf.find('.tag').find('span');
+    //     //dblk.length === 0 ? console.log('notag:',_url) : '';
+    //     dblk.each(function () {
+    //         let _tag = $(this);
+    //         let key = _tag.attr('class');
+    //         let value = _tag.text();
+    //         let item = {};
+    //         item[key] = value;
+    //         _tags.push(item);
+    //     });
+    //
+    //
+    //     dblk = esf.find('.totalPrice').find('span');
+    //     let _tprice = Number(dblk.text());
+    //
+    //
+    //     dblk = esf.find('.unitPrice');
+    //     let _rowUprice = dblk.attr('data-price');
+    //     let _uprice = Number(_rowUprice);//单价
+    //
+    //
+    //     //组合单条二手房信息结构，按照从微观到宏观的方式
+    //     let esfInfo = {
+    //         uprice: _uprice,    //单价，决定收益，要与小区均价、评估均价
+    //         tprice: _tprice,    //总价，
+    //         hrname: _hrname,    //小区名
+    //         favamt: _favAmt,    //关注人数
+    //         seeamt: _seeAmt,    //带看次数
+    //         asktime: _askTime,   //挂牌时间
+    //         deco: _deco,      //装修
+    //         floor: _floor,      //楼层
+    //         layout: _layout,    //户型
+    //         drct: _drct,        //朝向
+    //         elvt: _elvt,        //电梯
+    //         isnew: _isNew,       //是否为新楼盘
+    //         type: _type,        //建筑类别
+    //         zone: _zone,         //板块
+    //         sdist: _dist,        //行政区
+    //         disturl: _disturl,   //行政区url
+    //         tags: _tags,         //地铁距离、年限
+    //         size: _size,         //面积
+    //         bdyear: _bdyear,    //房屋建设年份
+    //         title: _title,      //房源描述
+    //         hrurl: _hrurl, //小区url
+    //         url: _url,  //房源url
+    //         cd: cCurrentDate,       //当前日期
+    //         ct: _nowtime, //时间戳
+    //         ds: gDsName       //数据源：链家
+    //     };
+    //
+    //     //获取地铁距离信息，为计算折扣准备
+    //     let subwayInfo = esfInfo.tags.filter(function (item,index,arrs) {
+    //         if(item.subway) return item.subway;
+    //     });
+    //     subwayInfo = subwayInfo.length===1?subwayInfo[0]['subway']:'';
+    //
+    //
+    //     //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
+    //     let cfmDisct = ut.getCfmDisct2(
+    //         esfInfo.size, esfInfo.floor, esfInfo.tprice, esfInfo.bdyear,
+    //         subwayInfo,
+    //         esfInfo.drct
+    //     );
+    //
+    //     //将核定折价率合并到房源信息中。
+    //     esfInfo = Object.assign(esfInfo, cfmDisct);
+    //
+    //     //将本条房源信息加入结果集
+    //     results.push(esfInfo);
+    //     if (lc.length === results.length) {
+    //         //ut.showLog('本页已加载完');
+    //         dataProcessor(results);
+    //     }
+    });
+    //
+    //根据页码区域的数值，计算是否有下一页
+    let dblk = $('div.content__pg');
+
+    let gTotalPage = dblk.attr('data-totalpage');
+
+
+    try {
+        //let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
+        gTotalPage = Number(dblk.attr('data-totalpage'));
+        let curPage = Number(dblk.attr('data-curpage'));
+        console.log(curPage + '/' + gTotalPage);
+        if (curPage < gTotalPage) {
+            let temp = dblk.attr('data-url');
+            nextPageUrl = temp.replace('{page}', curPage + 1);
+            gCurrentPageNum++;
+        } else {
+            nextPageUrl = '';
+
+            //达到最后一页，则对全量租赁房源的价格进行计算
+            dataProcessor(gTotalRent);
+
+        }
+    } catch (e) {
+        console.log('翻页信息解析错误', e, nextPageUrl);
+        setTimeout(function () {
+            //此处采用函数递归调用，也可以考虑启动单独的进程调用。
+            console.warn('休息一会.....');
+        }, 500);
+    }
+    let a = '1';//调试锚点，在此终端，便于观察上述变量的值
+
+    return nextPageUrl;
+
+}
+
 
 function esfPaser(html, dataProcessor) {
 
@@ -917,6 +1327,184 @@ function esfDp(esfs) {
 }
 
 /**
+ * 计算某小区的租赁平米均价
+ * @param rents
+ */
+function rentDp(rents) {
+    let totalSize = 0;
+    let totalPrice = 0;
+    // rents.map((item,index,arr)=>{
+    //     totalSize = totalSize + item.size;
+    //     totalPrice = totalPrice +item.rprice;
+    // });
+    //
+    // //每平米每年的租金
+    // let rpricePermeter = ((totalPrice*12)/totalSize);
+    //
+    // //将租赁均价更新到数据库中
+    // MongoClient.connect(cf.cDburl, function (err, db) {
+    //     assert.equal(err, null);
+    //     let coll = db.collection(gDsName+'zone');
+    //     let t = require('assert');
+    //     let hrurl = gSiteUrl+'/xiaoqu/'+gHr+'/';
+    //     console.log(hrurl);
+    //     try {
+    //         coll.updateOne(
+    //             {'url': hrurl},
+    //             {$set: {'ruprice': Number(rpricePermeter)}},
+    //             {upsert: true, w: 1},
+    //             function (err, r) {
+    //                 t.equal(null, err);
+    //                 db.close();
+    //             });
+    //     } catch (e) {
+    //         console.error('更新租赁均价时错误', e);
+    //         db.close();
+    //     }
+    // });
+
+    dbut.save2db2(gDsName + '_rent', rents, cf.cDburl);
+}
+
+/**
+ * 功能：为指定板块内租赁房源生成所在小区的租售比
+ * 算法：
+ * 1、按照小区（hrurl）排序，遍历该板块中的租赁房源
+ * 2、分别累加每个小区内房源的每平米租赁单价和租赁面积，相除后形成该小区的每月每平米租金ruprice
+ * 3、按照hrurl将ruprice更新到ljsh_zone中
+ *
+ * 4、生成ljsh_rentrsr表，其中包含rsr。该步骤已由saveRentRsr()实现
+ */
+function genRsrOfZone() {
+    MongoClient.connect(cf.cDburl, function (err, db) {
+        assert.equal(null, err);
+        let collection = db.collection(gDsName+'_rent'); //哪个表
+
+        collection.find({'zone_code': gZone})
+            .sort({'hrurl': 1}).toArray(function (err, docs) {
+            assert.equal(null, err);
+            //console.log(docs);
+            db.close();
+
+            //汇总计算每个小区的累计面积和累计租金，计算出租金单价
+            let hrs = {};
+            docs.map((item, index, arr) => {
+                if (!hrs[item.hrnum]) {
+                    hrs[item.hrnum] = {};
+                    hrs[item.hrnum]['total_size'] = 0;
+                    hrs[item.hrnum]['total_price'] = 0;
+                    hrs[item.hrnum]['rent_amt'] = 0;
+                }
+                hrs[item.hrnum]['total_size'] = item.size + hrs[item.hrnum]['total_size'];
+                hrs[item.hrnum]['total_price'] = item.rprice + hrs[item.hrnum]['total_price'];
+                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price']*12/hrs[item.hrnum]['total_size']).toFixed(0));
+                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;
+            });
+            console.log(Object.keys(hrs).length, hrs);
+
+
+            let records = Object.keys(hrs);
+            //遍历当前板块中的小区，更新到ljsh_zone中
+            records.map((item,index,arr)=>{
+
+                MongoClient.connect(cf.cDburl, function (err, db) {
+                    assert.equal(err, null);
+                    let coll = db.collection(gDsName+'zone');
+                    let t = require('assert');
+
+                    try {
+                        for (let i = 0; i < records.length; i++) {
+                            let record = hrs[item];
+                            let url = gSiteUrl+'/xiaoqu/'+item+'/';
+
+                            coll.updateOne(
+                                {'url': url},
+                                {$set: record, $currentDate: {'updt': true}},
+                                {upsert: true, w: 1},
+                                function (err, r) {
+                                    t.equal(null, err);
+                                    t.equal(1, r.result.n);
+                                });
+
+                            if (i === records.length - 1) {
+                                db.close();
+                            }
+                        }
+                    } catch (e) {
+                        console.log('插入信息错误', e);
+                        db.close();
+                    }
+                });
+            });
+        });
+    });
+}
+
+function genRsrOfHr() {
+    MongoClient.connect(cf.cDburl, function (err, db) {
+        assert.equal(null, err);
+        let collection = db.collection(gDsName+'_rent'); //哪个表
+
+        collection.find({'hrnum': gHrid}).toArray(function (err, docs) {
+            assert.equal(null, err);
+            //console.log(docs);
+            db.close();
+
+            //汇总计算每个小区的累计面积和累计租金，计算出租金单价
+            let hrs = {};
+            docs.map((item, index, arr) => {
+                if (!hrs[item.hrnum]) {
+                    hrs[item.hrnum] = {};
+                    hrs[item.hrnum]['total_size'] = 0;
+                    hrs[item.hrnum]['total_price'] = 0;
+                    hrs[item.hrnum]['rent_amt'] = 0;
+                }
+                hrs[item.hrnum]['total_size'] = item.size + hrs[item.hrnum]['total_size'];
+                hrs[item.hrnum]['total_price'] = item.rprice + hrs[item.hrnum]['total_price'];
+                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price']*12/hrs[item.hrnum]['total_size']).toFixed(0));
+                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;
+            });
+            console.log(Object.keys(hrs).length, hrs);
+
+
+            let records = Object.keys(hrs);
+            //遍历当前板块中的小区，更新到ljsh_zone中
+            records.map((item,index,arr)=>{
+
+                MongoClient.connect(cf.cDburl, function (err, db) {
+                    assert.equal(err, null);
+                    let coll = db.collection(gDsName+'zone');
+                    let t = require('assert');
+
+                    try {
+                        for (let i = 0; i < records.length; i++) {
+                            let record = hrs[item];
+                            let url = gSiteUrl+'/xiaoqu/'+item+'/';
+
+                            coll.updateOne(
+                                {'url': url},
+                                {$set: record, $currentDate: {'updt': true}},
+                                {upsert: true, w: 1},
+                                function (err, r) {
+                                    t.equal(null, err);
+                                    t.equal(1, r.result.n);
+                                });
+
+                            if (i === records.length - 1) {
+                                db.close();
+                            }
+                        }
+                    } catch (e) {
+                        console.log('插入信息错误', e);
+                        db.close();
+                    }
+                });
+            });
+        });
+    });
+}
+
+/**
  * 将行政区、板块数据保存入库。并生成该城市所有板块的采集脚本。
  * @param districts
  */
@@ -1200,6 +1788,86 @@ function selectData3(db, tbname, callback) {
         }
         ut.showLog('完成查询' + result.length + '条');
         callback(result);
+    });
+}
+
+/**
+ * 查询租售比
+ * @param db
+ * @param tbname
+ * @param callback
+ */
+function selectData4(db, tbname, callback) {
+    ut.showLog('开始查询将导出的数据');
+    let collection = db.collection(tbname);
+
+    collection.aggregate([
+        {
+            $match: {
+                $and: cf.cRentConditions
+            }
+        },
+        {$project: cf.cRentFieldsValue},
+        {$sort: cf.cRentSortBy}
+    ]).toArray(function (err, result) {
+        if (err) {
+            console.log('出错：' + err);
+            return;
+        }
+        ut.showLog('完成查询' + result.length + '条');
+
+        db.close();
+        if(callback) callback(result);
+    });
+}
+
+function saveRentRsr() {
+
+    MongoClient.connect(cf.cDburl, function (err, db) {
+
+        ut.showLog('开始连接DB');
+        selectData4(db, gDsName+'zone', function (result) {
+
+            let data_content = [];
+
+            ut.showLog('开始组装_rentrsr数据' + result.length);
+            for (let i = 0; i < result.length; i++) {
+                let esf = result[i];
+
+
+                //只导出笋值小于阀值的数据和存在异常的数据
+                // if (esf['rsr'] <= cf.bsrLessThen || isNaN(esf['rsr'])) {
+                    //将每条房源的各个字段信息转换成数组，组装成一条房源记录
+                    let record = {};
+
+                    //根据配置的列名顺序来组装导出每一条要导出的数据
+                    let fieldNameList = Object.keys(cf.cRentFieldsValue);
+                    for (let j = 1; j < fieldNameList.length; j++) {
+                        let fieldName = fieldNameList[j];
+
+                        if (fieldName === 'rsr') {
+                            if (esf[fieldName] === null) {
+                                ut.showLog('以下rsr为空，建议排查原因:');
+                                ut.showLog(JSON.stringify(esf));
+                            } else {
+                                esf[fieldName] = (100*esf[fieldName]).toFixed(2);
+                            }
+                        }
+                        record[fieldName]=esf[fieldName];
+                    }
+                    //将单条房源记录加入到所有记录中
+                    data_content.push(record);
+                // }
+
+                //console.log(data_content);
+
+                if (i === result.length - 1) {
+                    console.log('',typeof(data_content),data_content.length);
+                    dbut.save2db(gDsName+'_rentrsr',data_content,cf.cDburl);
+                }
+            }
+            db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
+        });
     });
 }
 

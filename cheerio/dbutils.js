@@ -12,7 +12,7 @@ exports.save2db = function (tbname, savedData, cDburl) {
 
     MongoClient.connect(cDburl, function (err, db) {
         assert.equal(err, null);
-
+        console.log('save2db:将保存的记录数', savedData.length);
         try {
             let coll = db.collection(tbname);
             coll.insertMany(savedData, function (err, result) {
@@ -119,7 +119,7 @@ exports.clearDb = function (tbname, cDburl) {
         let coll = db.collection(tbname);
         coll.deleteMany({}, {w: 1}, function (err, r) {
             assert.equal(null, err);
-            console.log('清理数据' + tbname + ':', r.nRemoved);
+            console.log('清理数据' + tbname + ':', r.result.n);
             db.close();
         });
     });
