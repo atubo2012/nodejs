@@ -93,18 +93,35 @@ let config = {
             //'浦东','闵行','宝山','徐汇' ,'普陀', '杨浦','长宁','黄浦','静安','闸北','虹口',
             '松江', '嘉定', '青浦', '奉贤', '金山', '崇明', '上海周边']
         },
+        'bj': {exclude:['昌平','大兴'],},
+        'tj': {exclude:[],},//天津
+
+        'sz': {exclude:[],},//深圳
+        'hz': {exclude:[],},//杭州
+        'nj': {exclude:[],},//南京
+        'hf':{exclude:[],},//合肥
+
+        'xm':{exclude:[],},//厦门
+        'gz':{exclude:[],},//广州
+        'dg':{exclude:[],},//东莞
+
+
+
         'cd': {exclude:[
             '江津', '大渡口', '渝中'
         ],},
         'cq': {exclude:['八宝街'],},
-        'hz': {exclude:[],},
-        'nj': {exclude:[],},
         'xa': {exclude:[],},
         'wh': {exclude:[],},
-        'sz': {exclude:[],},
-        'tj': {exclude:[],},
         'su': {exclude:[],},
-        'bj': {exclude:['昌平','大兴'],},
+        'zz':{exclude:[],},//郑州
+        'dl':{exclude:[],},//大连
+        'sy':{exclude:[],},//沈阳
+        'jn':{exclude:[],},//济南
+        'qd':{exclude:[],},//青岛
+
+
+
     },
     dss: { //数据源
         'zy': {

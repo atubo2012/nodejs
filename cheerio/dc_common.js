@@ -262,6 +262,9 @@ function  genRentScript2 (){
 
 function  genRentScript3 (){
     let cmd = '\n';
+    let _head = ut.rf('dcheadrent.sh.tplt');
+    let _foot = ut.rf('dcfootrent.sh.tplt');
+
     //获取所有小区的编号和名字列表
     console.log('开始生成租赁房采集脚本......');
     dbut.findFromDb(gDsName+'zone',{},30000,cf.cDburl,(hrs,db)=>{
@@ -270,7 +273,10 @@ function  genRentScript3 (){
 
         hrs.map((item,index,arr1)=> {
 
-            if (Number(item.rentamt.replace('套正在出租', '')) > 0) {
+            if(!item.rentamt){
+                console.log(item.hrname+' 数据存在缺失，请确认是否采集完整或网站中的相关信息存在缺失 '+item.url);
+            }
+            else if (Number(item.rentamt.replace('套正在出租', '')) > 0) {
                 let hrid = item.url.replace(gSiteUrl + '/xiaoqu/', '').replace('/', '');
                 cmd += gCmd + '  dcesfrent ' + gCity + '.' + hrid + ' \n';
                 cmd += gCmd + '  gen_rsr_of_zone ' + gCity + '.' + hrid + ' \n';
@@ -282,7 +288,7 @@ function  genRentScript3 (){
         cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
 
         //生成采集所有小区租赁信息的脚本
-        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+        ut.wf('gen_rentall_'+gCity+gFilePostFix,(_head+cmd+_foot).replace(/{city}/g, gCity));
         console.log('完成');
     });
 }
@@ -416,7 +422,7 @@ function hrPaser(html, dataProcessor) {
         let _url = dblk.attr('href');
 
         dblk = zone.find('div.houseInfo');
-        let sellAndRent = dblk.text();
+        let sellAndRent = dblk.text().trim();
         let _sellAmt = sellAndRent.split('|')[0].trim();
         let _rentAmt = sellAndRent.split('|')[1].trim();
         let _rentAmt2 = Number(_rentAmt.replace('套正在出租',''));
@@ -426,7 +432,9 @@ function hrPaser(html, dataProcessor) {
         let ttt = positonInfo[0].trim();
         let _dist = ttt.split('\n')[0];
         let _zone = ttt.split('\n')[1].trim();
-        let _bdyear = positonInfo[1].trim();
+        let _bdyear = '未设置';
+        if(positonInfo.length>1)
+            _bdyear = positonInfo[1].trim(); //有的城市中，小区信息不含年份
 
 
         dblk = zone.find('div.totalPrice').find('span'); //通过查找两个标签来定位属性。
@@ -439,19 +447,6 @@ function hrPaser(html, dataProcessor) {
         let _saleAmt = Number(dblk.find('span').text());
         let _esfUrl = dblk.attr('href');
 
-
-        // let _esfAmt = '0套';
-        // let _czfAmt = '0套';
-        //
-        // //每个小区的二手房和租房为0套的情况下，在页面上不显示相应的节点。
-        // for (let i = 0; i < dblk.length; i++) {
-        //     if ('二手房' === dblk[i].children[0].data.trim()) {
-        //         _esfAmt = dblk[i].children[1].children[0].data.trim();
-        //     } else if ('租房' === dblk[i].children[0].data.trim()) {
-        //         _czfAmt = dblk[i].children[1].children[0].data.trim();
-        //     }
-        //
-        // }
 
         let hrInfo = {
             hrname: _hrname,    //小区名
@@ -1462,7 +1457,7 @@ function genRsrOfHr() {
                 hrs[item.hrnum]['total_size'] = item.size + hrs[item.hrnum]['total_size'];
                 hrs[item.hrnum]['total_price'] = item.rprice + hrs[item.hrnum]['total_price'];
                 hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price']*12/hrs[item.hrnum]['total_size']).toFixed(0));
-                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;
+                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;//rent_amt是根据该小区内实际的房源统计出来的值，rentamt2是小区信息中显示的值，应该以rent_amt为准
             });
             console.log(Object.keys(hrs).length, hrs);
 
@@ -1505,7 +1500,7 @@ function genRsrOfHr() {
 }
 
 /**
- * 将行政区、板块数据保存入库。并生成该城市所有板块的采集脚本。
+ * 将行政区、板块数据保存入库。并生成该城市所有板块的二手房采集脚本、租赁房采集脚本。
  * @param districts
  */
 function zoneDp(districts) {
