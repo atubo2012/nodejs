@@ -13,7 +13,7 @@ process.setMaxListeners(6000);
 
 //被关注度股票，每日根据最新的价格，更新租售比。每增加一个，需要重新执行dcEps2()和updatePrice()
 // let gFocusedStocks = ["600000","600369","600958","601166","601788",'600663','601988','600284','600109','600170','600068','002146','000926'];
-let gFocusedStocks = ["601988","600369","600109","601166"];
+let gFocusedStocks = ["601988","600369","600109","601166","600000","600837"];
 
 
 //数据源：EPS历史数据，用来在初始化关注股的EPS是使用。
@@ -85,6 +85,7 @@ function writeAllStockCode2Ffile() {
 
 function dcEps2() {
 
+    process.env['PARSEENCODE'] = 'gbk';
     dbut.clearDb('rsr',cf.cDburl);
     //gStockCodes = gFocusedStocks;
     try {
@@ -105,6 +106,7 @@ function paser(html, dataProcessor) {
     //加载页面内容
     let $ = cheerio.load(html);
 
+    console.log(html);
     //定位财报数据
     let finData = $('table#FundHoldSharesTable').find('tbody').find('tr');//.find('tbody').find('tr.gray');
 

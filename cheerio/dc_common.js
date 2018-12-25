@@ -418,14 +418,15 @@ function hrPaser(html, dataProcessor) {
         let zone = $(this);
 
         let dblk = zone.find('div.title').find('a');
-        let _hrname = dblk.text(); //ut.showLog(_hrname);
-        let _url = dblk.attr('href');
+        let _hrname     = dblk.text(); //ut.showLog(_hrname);
+        let _url        = dblk.attr('href');
+        let _rent_url   = _url.replace('/xiaoqu/','/zufang/c');
 
         dblk = zone.find('div.houseInfo');
         let sellAndRent = dblk.text().trim();
-        let _sellAmt = sellAndRent.split('|')[0].trim();
-        let _rentAmt = sellAndRent.split('|')[1].trim();
-        let _rentAmt2 = Number(_rentAmt.replace('套正在出租',''));
+        let _sellAmt    = sellAndRent.split('|')[0].trim();
+        let _rentAmt    = sellAndRent.split('|')[1].trim();
+        let _rentAmt2   = Number(_rentAmt.replace('套正在出租',''));
 
         dblk = zone.find('div.positionInfo');
         let positonInfo = dblk.text().split('/');
@@ -450,19 +451,20 @@ function hrPaser(html, dataProcessor) {
 
         let hrInfo = {
             hrname: _hrname,    //小区名
-            url: _url,
             uprice: _uprice,    //均价
             sellamt: _sellAmt,  //已售数量
             rentamt: _rentAmt,  //在租数量
-            rentamt2:_rentAmt2, //正在出租的量化值
+            rentamt2: _rentAmt2, //正在出租的量化值
             saleamt: _saleAmt,   //在售数量
             dist: _dist,
             zone: _zone,         //板块
             bdyear: _bdyear,    //房屋建设年份
+            url: _url,
             esfurl: _esfUrl,    //
+            rent_url: _rent_url, //租赁房源
             cd: ut.getToday(),       //当前日期
             ct: _nowtime, //时间戳
-            ds: gDsName
+            ds: gDsName,
         };
 
         results.push(hrInfo);
