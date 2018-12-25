@@ -480,7 +480,9 @@ function hrPaser(html, dataProcessor) {
 
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            nextPageUrl = temp.replace('{page}', curPage + 1);
+            console.log(temp);
+            //nextPageUrl = temp.replace('{page}', curPage + 1);
+            nextPageUrl = '/xiaoqu/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -586,146 +588,7 @@ function esfPaserRent(html, dataProcessor) {
           */
 
          let a = 1;
-    //     _isNew = (_isNew === '新上') ? _isNew : '';
-    //
-    //
-    //
-    //     //非别墅房型的新系列：华松小区 | 2室1厅 | 59.6平米 | 南 | 简装 | 无电梯
-    //     let _layout = tmp[startIndex++].trim(); //房型
-    //     let _size = Number(tmp[startIndex++].trim().replace('平米', '')); //面积
-    //     let _drct = tmp[startIndex++]; //朝向，有可能为空
-    //     if (undefined === _drct) {
-    //         _drct = '[未填]';
-    //     } else {
-    //         _drct = _drct.trim();
-    //     }
-    //     let _deco = tmp[startIndex]; //装修
-    //
-    //     let _elvt = '';     //电梯，有可能为空
-    //     if (tmp.length < 6) {
-    //         //console.log('数据项少于6 :'+tmp.length,tmp,_url);
-    //     } else {
-    //         _elvt = tmp[5];//电梯
-    //     }
-    //
-    //
-    //     dblk = esf.find('.houseInfo').find('a');
-    //
-    //     let _hrurl = dblk.attr('href'); //小区链接
-    //
-    //
-    //     dblk = esf.find('.positionInfo');
-    //     tmp = dblk.text().split('-');
-    //     let pt1 = tmp[0].trim();
-    //
-    //     let _floor = '';
-    //     let _bdyear = '[未填]';
-    //
-    //
-    //     if (_layout.indexOf('别墅') >= 0) {
-    //         _floor = pt1.substring(0, pt1.indexOf('层') + 1);
-    //         if (pt1.indexOf('年建') >= 0) {
-    //             _bdyear = pt1.substring(pt1.indexOf('层') + 1, pt1.indexOf('年建'));
-    //             _type = pt1.substring(pt1.indexOf('建') + 1);
-    //         } else {
-    //             _type = pt1.substring(pt1.indexOf('层') + 1);
-    //         }
-    //     } else {
-    //         _floor = pt1.substring(0, pt1.indexOf(')') + 1); //楼层
-    //         if (pt1.indexOf('年建') >= 0) {
-    //             _bdyear = pt1.substring(pt1.indexOf(')') + 1, pt1.indexOf('年建'));
-    //             _type = pt1.substring(pt1.indexOf('建') + 1);
-    //         } else {
-    //             _type = pt1.substring(pt1.indexOf(')') + 1);
-    //         }
-    //     }
-    //
-    //
-    //     let _zone = tmp[1].trim();
-    //     let _zoneurl = $('a', dblk).attr('href');
-    //
-    //
-    //     dblk = esf.find('.followInfo');
-    //     tmp = dblk.text().split('/');
-    //     let _favAmt = Number(tmp[0].replace('人关注', '').trim());
-    //     let _seeAmt = Number(tmp[1].replace('共', '').replace('次带看', '').trim());
-    //     let _askTime = tmp[2].replace('以前发布', '').trim();
-    //
-    //
-    //     let _tags = [];
-    //     dblk = esf.find('.tag').find('span');
-    //     //dblk.length === 0 ? console.log('notag:',_url) : '';
-    //     dblk.each(function () {
-    //         let _tag = $(this);
-    //         let key = _tag.attr('class');
-    //         let value = _tag.text();
-    //         let item = {};
-    //         item[key] = value;
-    //         _tags.push(item);
-    //     });
-    //
-    //
-    //     dblk = esf.find('.totalPrice').find('span');
-    //     let _tprice = Number(dblk.text());
-    //
-    //
-    //     dblk = esf.find('.unitPrice');
-    //     let _rowUprice = dblk.attr('data-price');
-    //     let _uprice = Number(_rowUprice);//单价
-    //
-    //
-    //     //组合单条二手房信息结构，按照从微观到宏观的方式
-    //     let esfInfo = {
-    //         uprice: _uprice,    //单价，决定收益，要与小区均价、评估均价
-    //         tprice: _tprice,    //总价，
-    //         hrname: _hrname,    //小区名
-    //         favamt: _favAmt,    //关注人数
-    //         seeamt: _seeAmt,    //带看次数
-    //         asktime: _askTime,   //挂牌时间
-    //         deco: _deco,      //装修
-    //         floor: _floor,      //楼层
-    //         layout: _layout,    //户型
-    //         drct: _drct,        //朝向
-    //         elvt: _elvt,        //电梯
-    //         isnew: _isNew,       //是否为新楼盘
-    //         type: _type,        //建筑类别
-    //         zone: _zone,         //板块
-    //         sdist: _dist,        //行政区
-    //         disturl: _disturl,   //行政区url
-    //         tags: _tags,         //地铁距离、年限
-    //         size: _size,         //面积
-    //         bdyear: _bdyear,    //房屋建设年份
-    //         title: _title,      //房源描述
-    //         hrurl: _hrurl, //小区url
-    //         url: _url,  //房源url
-    //         cd: cCurrentDate,       //当前日期
-    //         ct: _nowtime, //时间戳
-    //         ds: gDsName       //数据源：链家
-    //     };
-    //
-    //     //获取地铁距离信息，为计算折扣准备
-    //     let subwayInfo = esfInfo.tags.filter(function (item,index,arrs) {
-    //         if(item.subway) return item.subway;
-    //     });
-    //     subwayInfo = subwayInfo.length===1?subwayInfo[0]['subway']:'';
-    //
-    //
-    //     //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
-    //     let cfmDisct = ut.getCfmDisct2(
-    //         esfInfo.size, esfInfo.floor, esfInfo.tprice, esfInfo.bdyear,
-    //         subwayInfo,
-    //         esfInfo.drct
-    //     );
-    //
-    //     //将核定折价率合并到房源信息中。
-    //     esfInfo = Object.assign(esfInfo, cfmDisct);
-    //
-    //     //将本条房源信息加入结果集
-    //     results.push(esfInfo);
-    //     if (lc.length === results.length) {
-    //         //ut.showLog('本页已加载完');
-    //         dataProcessor(results);
-    //     }
+
     });
     //
     //根据页码区域的数值，计算是否有下一页
@@ -961,7 +824,11 @@ function esfPaser(html, dataProcessor) {
         console.log(curPage + '/' + gTotalPage);
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            nextPageUrl = temp.replace('{page}', curPage + 1);
+            //console.log(temp);
+            //let nextPageUrl2 = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
+            //console.log(nextPageUrl2);
+            //nextPageUrl = temp.replace('{page}', curPage + 1);
+            nextPageUrl = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -1152,7 +1019,8 @@ function esfPaser4bj(html, dataProcessor) {
         console.log(curPage + '/' + gTotalPage);
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            nextPageUrl = temp.replace('{page}', curPage + 1);
+            //nextPageUrl = temp.replace('{page}', curPage + 1);
+            nextPageUrl = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -1328,38 +1196,6 @@ function esfDp(esfs) {
  * @param rents
  */
 function rentDp(rents) {
-    let totalSize = 0;
-    let totalPrice = 0;
-    // rents.map((item,index,arr)=>{
-    //     totalSize = totalSize + item.size;
-    //     totalPrice = totalPrice +item.rprice;
-    // });
-    //
-    // //每平米每年的租金
-    // let rpricePermeter = ((totalPrice*12)/totalSize);
-    //
-    // //将租赁均价更新到数据库中
-    // MongoClient.connect(cf.cDburl, function (err, db) {
-    //     assert.equal(err, null);
-    //     let coll = db.collection(gDsName+'zone');
-    //     let t = require('assert');
-    //     let hrurl = gSiteUrl+'/xiaoqu/'+gHr+'/';
-    //     console.log(hrurl);
-    //     try {
-    //         coll.updateOne(
-    //             {'url': hrurl},
-    //             {$set: {'ruprice': Number(rpricePermeter)}},
-    //             {upsert: true, w: 1},
-    //             function (err, r) {
-    //                 t.equal(null, err);
-    //                 db.close();
-    //             });
-    //     } catch (e) {
-    //         console.error('更新租赁均价时错误', e);
-    //         db.close();
-    //     }
-    // });
-
     dbut.save2db2(gDsName + '_rent', rents, cf.cDburl);
 }
 
