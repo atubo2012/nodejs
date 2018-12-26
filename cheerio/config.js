@@ -20,7 +20,7 @@ let config = {
 
 
     //性能参数
-    cDcInterval: 2000, //两次采集之间的时间
+    cDcInterval: 1000, //两次采集之间的时间
     cDcPauseInterval: 5000, //采集期间出现反爬关键字时，暂停的时间
     cAntiDcKeyWord:'系统繁忙',//反爬机制启动时，页面的关键字
     cMaxPageNum: 100, //采集页面的数量，如果太多可能会造成内存溢出。
@@ -172,7 +172,11 @@ let config = {
         rent_amt:1,
         total_size:1,
         total_price:1,
+
         url:1,
+        esfurl:1,
+        rent_url:1,
+
         updt:1,
     },
     cRentConditions:[
