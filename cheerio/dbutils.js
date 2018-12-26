@@ -2,6 +2,7 @@
 
 let MongoClient = require('mongodb').MongoClient;
 let assert = require('assert');
+let ut = require('./utils.js');
 /**
  * 新增方式保存到指定表中
  * @param tbname cellection的名字
@@ -67,46 +68,6 @@ exports.save2db2 = function (tbname, savedData, cDburl) {
         }
     });
 };
-
-/**
- * 在遍历数据的循环内逐个打开连接再upsert到数据库中，且支持根据设定的条件
- * 对数据库的链接开关频繁，不推荐使用。仅作为一种可行性供参考。
- * @param tbname
- * @param savedData
- * @param cDburl
- * @param filter
- */
-// exports.save2db3 = function (tbname, savedData, cDburl, filter) {
-//
-//     MongoClient.connect(cDburl, function (err, db) {
-//         assert.equal(err, null);
-//         let coll = db.collection(tbname);
-//         let t = require('assert');
-//         try {
-//             console.log('save2db3', savedData.length);
-//             for (let i = 0; i < savedData.length; i++) {
-//                 let record = savedData[i];
-//
-//                 coll.updateOne(
-//                     filter,
-//                     {$set: record, $currentDate: {'updt': true}},
-//                     {upsert: true, w: 1},
-//                     function (err, r) {
-//                         t.equal(null, err);
-//                         t.equal(1, r.result.n);
-//                     });
-//                 if (i === savedData.length - 1) {
-//                     console.log('save2db2关闭数据库');
-//                     db.close();
-//                 }
-//             }
-//         } catch (e) {
-//             console.log('插入信息错误', e);
-//             db.close();
-//         }
-//     });
-// };
-
 
 /**
  * 删除指定表中的所有数据

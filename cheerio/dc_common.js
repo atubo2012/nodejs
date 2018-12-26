@@ -33,6 +33,9 @@ let gPreCondsRent = 'rco11';  //必须指定
 let gHrs = null;
 let gHrid = '';
 
+
+let gCitys = [];            //所有城市的房源数据
+
 main();
 
 function loadHrs(cb){
@@ -71,11 +74,10 @@ function main() {
             let cityAndZone = args[1].split('.');
             gCity = cityAndZone[0]; //区分不同的城市、库表名
             gZone = cityAndZone[1]; //区分不同的板块
-            if (typeof(cf.cities[gCity]) === 'undefined') {
-                console.error('请在config.js中cities属性中设置[' + gCity + ']对应的入口');
-                return;
-            }
-
+            // if (typeof(cf.cities[gCity]) === 'undefined') {
+            //     console.error('请在config.js中cities属性中设置[' + gCity + ']对应的入口');
+            //     return;
+            // }
 
             //根据运行时的参数，设置全局参数：城市、板块、数据源
             gSiteUrl = gSiteUrl.replace('{}', gCity);
@@ -165,6 +167,17 @@ function main() {
                 }
             }
 
+            else if ('stat' === _instruct) {
+                ut.showLog('开始采集房源汇总数......');
+                let url = 'https://'+args[1]+'.lianjia.com';
+                dc.dcs(url, '/', statPaser, statDp, cf.cMaxPageNum);
+
+            }else if ('city' === _instruct) {
+                ut.showLog('开始采集城市......');
+                dc.dcs(gSiteUrl, '/city/', cityPaser, cityDp, cf.cMaxPageNum);
+
+            }
+
 
             //经纪人采集
             else if ('expjjr' === _instruct) {
@@ -214,9 +227,6 @@ function  getDistAll (){
     ut.wf('get_dist_all'+gFilePostFix,cmd);
 }
 
-/**
- * 查询
- */
 function  genRentScript (){
     let cmd = '\n';
     //获取所有小区的编号和名字列表
@@ -259,7 +269,6 @@ function  genRentScript2 (){
         console.log('完成');
     });
 }
-
 function  genRentScript3 (){
     let cmd = '\n';
     let _head = ut.rf('dcheadrent.sh.tplt');
@@ -291,6 +300,90 @@ function  genRentScript3 (){
         ut.wf('gen_rentall_'+gCity+gFilePostFix,(_head+cmd+_foot).replace(/{city}/g, gCity));
         console.log('完成');
     });
+}
+
+/**
+ * 房源汇总数解析器
+ * @param html
+ * @param dataProcessor
+ * @returns {string}
+ */
+function statPaser(html, dataProcessor) {
+
+    ut.wf(gZone + 'dist.html', html);
+    //加载页面内容
+    let $ = cheerio.load(html);
+
+    //解析行政区信息。定位【指定属性名、属性值(data-role="ershoufang")】的节点下的class=selected属性
+    let datas = $('div.house-num').find('li');
+
+    let d2 = {};
+    let cityname = '';
+    //组装行政区列表
+    datas.each(function () {
+        let d = $(this);  //每条记录
+        let _link = d.text();
+        let dataarr = _link.split(' ');
+        if(dataarr[0].indexOf('租')>=0)
+            d2['rentamt']= Number(dataarr[1]);
+        if(dataarr[0].indexOf('二手房')>=0)
+            d2['esfamt']= Number(dataarr[1]);
+
+        d2['cityname'] = dataarr[0].split('链家')[0]
+    });
+
+    dataProcessor(d2);
+
+    return '';
+
+}
+
+/**
+ * 房源信息
+ * @param datas
+ */
+function statDp(datas) {
+    console.log(datas);
+    //gCitys.push(datas);
+    datas['updt'] = ut.getToday();
+    dbut.save2db('city2',[datas],cf.cDburl);
+}
+
+function cityPaser(html, dataProcessor) {
+    //加载页面内容
+    let $ = cheerio.load(html);
+
+    //解析行政区信息。定位【指定属性名、属性值(data-role="ershoufang")】的节点下的class=selected属性
+    let datas = $('div.city_province').find('ul').find('li').find('a');
+    let d2 = [];
+
+    //组装行政区列表
+    datas.each(function () {
+        let d = $(this);  //每条记录
+        let cityname = d.text();
+        let _link = d.attr('href');
+        d2.push({'cityname':cityname,'url':_link});
+    });
+    dataProcessor(d2);
+    return '';
+
+}
+
+/**
+ * 生成各城市汇总数据的脚本
+ * @param datas
+ */
+function cityDp(datas) {
+
+
+    let cmd = '';
+    datas.forEach((item,index,arr)=>{
+
+        cmd = cmd + gCmd + ' stat '+item.url.replace('.lianjia.com/','').replace('https://','') + '\n';
+        //dc.dcs(item.url, '/', statPaser, statDp, cf.cMaxPageNum);
+    });
+    console.log(cmd);
+    ut.wf('get_city' + gFilePostFix,cmd );
 }
 
 
