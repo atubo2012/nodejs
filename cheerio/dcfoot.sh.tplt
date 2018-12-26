@@ -7,8 +7,8 @@ node dc_common.js save2bamboo {city}.
 
 
 node dc_common.js genrentscript {city}.
-chmod +x gen_rentall_{city}.sh
-gen_rentall_{city}.sh
+chmod +x ./gen_rentall_{city}.sh
+./gen_rentall_{city}.sh
 
 echo "发送通知"
 mail -s "{city}" -a lj{city}esf-$dateymd.xlsx $SI_PARM_MAILUSERS_DEV <  a.msg
