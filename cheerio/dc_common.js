@@ -374,15 +374,11 @@ function cityPaser(html, dataProcessor) {
  * @param datas
  */
 function cityDp(datas) {
-
-
-    let cmd = '';
+    let cmd = ut.rf('dcheadenv.tplt');
     datas.forEach((item,index,arr)=>{
-
         cmd = cmd + gCmd + ' stat '+item.url.replace('.lianjia.com/','').replace('https://','') + '\n';
-        //dc.dcs(item.url, '/', statPaser, statDp, cf.cMaxPageNum);
     });
-    console.log(cmd);
+
     ut.wf('get_city' + gFilePostFix,cmd );
 }
 
