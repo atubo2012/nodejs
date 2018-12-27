@@ -12,7 +12,6 @@ rm -rf *.html
 
 #清理数据
 echo "db.lj{city}esf.remove({});db.lj{city}zone.remove({});"  | mongo $SI_DC_DBURL
-echo "db.lj{city}_rent.remove({});db.lj{city}_rentrsr.remove({});"  | mongo $SI_DC_DBURL
 
 #创建索引
 echo "db.lj{city}esf.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL
@@ -26,5 +25,5 @@ echo "db.lj{city}esf.ensureIndex({bsr:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({hrap:1,size:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}esf.ensureIndex({size:1})"  | mongo $SI_DC_DBURL
 echo "db.lj{city}zone.ensureIndex({cd:1})"  | mongo $SI_DC_DBURL
-echo "db.lj{city}_rentrsr.ensureIndex({uprice:1,rentamt2:1})"  | mongo $SI_DC_DBURL
+
 

@@ -11,7 +11,7 @@ cd /root/workspace/nodejs/cheerio
 rm -rf *.html
 
 #清理数据
-echo "db.lj{city}_rent.remove({});db.lj{city}_rentrsr.remove({});"  | mongo $SI_DC_DBURL
+echo "db.lj{city}_rent.remove({});"  | mongo $SI_DC_DBURL
 
 #创建索引
 echo "db.lj{city}_rentrsr.ensureIndex({uprice:1,rentamt2:1})"  | mongo $SI_DC_DBURL

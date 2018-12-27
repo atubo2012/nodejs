@@ -1,1 +1,5 @@
+echo "db.lj{city}_rentrsr.remove({});"  | mongo $SI_DC_DBURL
+
+node dc_common.js   save_rent_rsr {city}.
+
 echo "dc rent complete"

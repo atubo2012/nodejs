@@ -294,7 +294,7 @@ function  genRentScript3 (){
                 console.log(item.hrname+' 没有租赁房源 '+item.url);
             }
         });
-        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+        //cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
 
         //生成采集所有小区租赁信息的脚本
         ut.wf('gen_rentall_'+gCity+gFilePostFix,(_head+cmd+_foot).replace(/{city}/g, gCity));
@@ -375,11 +375,16 @@ function cityPaser(html, dataProcessor) {
  */
 function cityDp(datas) {
     let cmd = ut.rf('dcheadenv.tplt');
+    let cmdCron = '\n';
     datas.forEach((item,index,arr)=>{
-        cmd = cmd + gCmd + ' stat '+item.url.replace('.lianjia.com/','').replace('https://','') + '\n';
+        let cityCode = item.url.replace('.lianjia.com/','').replace('https://','');
+        cmd = cmd + gCmd + ' stat '+cityCode+ '\n';
+        if(cityCode.indexOf('.fang')<0){
+            cmdCron = cmdCron+ '15   '+index%23+' * * '+index%6+'  root /root/workspace/nodejs/cheerio/lj'+cityCode+'.sh >> /root/workspace/nodejs/cheerio/log/lj'+cityCode+'.log 2>&1 &'+'\n';
+        }
     });
-
     ut.wf('get_city' + gFilePostFix,cmd );
+    ut.wf('cron_list' +gFilePostFix,cmdCron);
 }
 
 
