@@ -276,7 +276,7 @@ function  genRentScript3 (){
 
     //获取所有小区的编号和名字列表
     console.log('开始生成租赁房采集脚本......');
-    dbut.findFromDb(gDsName+'zone',{},30000,cf.cDburl,(hrs,db)=>{
+    dbut.findFromDb(gDsName+'zone',{'rentamt2':{$gt:0}},30000,cf.cDburl,(hrs,db)=>{
 
         let leftCounter = hrs.length;
 
