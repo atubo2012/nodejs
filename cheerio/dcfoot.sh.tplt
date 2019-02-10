@@ -1,8 +1,10 @@
 
 
 node dc_common.js setap {city}.
-//node dc_common.js mccfmd {city}.
+#node dc_common.js mccfmd {city}.
 node dc_common.js expdata {city}.
+
+echo "db.lj{city}esf_result.remove({});"  | mongo $SI_DC_DBURL
 node dc_common.js save2bamboo {city}.
 
 
