@@ -6,7 +6,7 @@ let dbut = require('./dbutils.js');
 let cf = require('./config.js');
 let dc = require('./dcutils.js');
 let os = require('os');
-const gFilePostFix = os.type()==='Linux'?'.sh':'.bat';
+const gFilePostFix = os.type() === 'Linux' ? '.sh' : '.bat';
 const cCurrentDate = ut.formatDate(new Date(), 'yyyyMMdd');
 const gCmd = 'node dc_common.js ';
 
@@ -24,8 +24,6 @@ let gDistricts = [];        //城市的行政区列表和区内的板块列表
 let gPostConds = cf.iclParkInfo ? '' : 'ng1hu1/';  //根据参数来控制是否包含车位
 
 
-
-
 let gTotalRent = [];        //所有租赁房源记录
 let MongoClient = require('mongodb').MongoClient;
 let assert = require('assert');
@@ -38,19 +36,19 @@ let gCitys = [];            //所有城市的房源数据
 
 main();
 
-function loadHrs(cb){
+function loadHrs(cb) {
 
     let a = 'aa';
 
-    if(!gHrs){
-        dbut.findFromDb(gDsName+'zone',{},20000,cf.cDburl,(results,db)=>{
-            results.map((item,index,arr)=>{
-                gHrs[item.hrnum]=item;
+    if (!gHrs) {
+        dbut.findFromDb(gDsName + 'zone', {}, 20000, cf.cDburl, (results, db) => {
+            results.map((item, index, arr) => {
+                gHrs[item.hrnum] = item;
             });
             cb();
         });
     }
-    else{
+    else {
         console.log('adafsdfsf')
     }
 }
@@ -59,7 +57,6 @@ function main() {
 
     try {
         process.setMaxListeners(cf.cMaxListener);
-
 
 
         //截取出应用程序的参数。process.argv的前两个元素为：args[0]:node，args[1]:程序文件.js
@@ -107,9 +104,9 @@ function main() {
             } else if ('expdata' === _instruct) {
                 ut.showLog('开始导出数据......');
                 export2xls(cf.cDburl, gDsName + 'esf');
-            }else if ('save2bamboo'===_instruct){
+            } else if ('save2bamboo' === _instruct) {
                 ut.showLog('开始保存笋盘结果数据......');
-                save2bamboo(cf.cDburl,gDsName + 'esf')
+                save2bamboo(cf.cDburl, gDsName + 'esf')
             }
 
 
@@ -126,12 +123,12 @@ function main() {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
                     ut.showLog('开始采集租赁房......');
-                     // loadHrs(()=>{
-                     //     dc.dcs(gSiteUrl, '/zufang/'+gPreCondsRent+'c'+gHrid+'/' , esfPaserRent, rentDp, cf.cMaxPageNum);
-                     // });
-                    dc.dcs(gSiteUrl, '/zufang/'+gPreCondsRent+'c'+gHrid+'/' , esfPaserRent, rentDp, cf.cMaxPageNum);
+                    // loadHrs(()=>{
+                    //     dc.dcs(gSiteUrl, '/zufang/'+gPreCondsRent+'c'+gHrid+'/' , esfPaserRent, rentDp, cf.cMaxPageNum);
+                    // });
+                    dc.dcs(gSiteUrl, '/zufang/' + gPreCondsRent + 'c' + gHrid + '/', esfPaserRent, rentDp, cf.cMaxPageNum);
                 }
-            }else if ('gen_rsr_of_zone' === _instruct) {
+            } else if ('gen_rsr_of_zone' === _instruct) {
                 ut.showLog('开始生成租售比信息......');
                 let cityAndHr = args[1].split('.');
                 gCity = cityAndHr[0]; //区分不同的城市、库表名
@@ -139,26 +136,28 @@ function main() {
                 //genRsrOfZone();
                 genRsrOfHr();
 
-            }else if ('save_rent_rsr' === _instruct) {
+            } else if ('save_rent_rsr' === _instruct) {
                 ut.showLog('开始保存租售比信息到单独的表......');
                 let cityAndZone = args[1].split('.');
                 gCity = cityAndZone[0]; //区分不同的城市、库表名
                 saveRentRsr();
-            }else if ('genrentscript' === _instruct) {
+            } else if ('genrentscript' === _instruct) {
                 ut.showLog('开始生成租房采集执行脚本......');
                 genRentScript3();
             }
 
-            //小区、行政区采集
+            //小区、行政区采集，同时，生成针对板块的二手房采集脚本和经纪人采集脚本 ljsh.sh jjr-ljsh.sh
             else if ('getdist' === _instruct) {
                 ut.showLog('开始解析和生成板块信息......');
                 dc.dcs(gSiteUrl, '/ershoufang/', distPaser, dcZones, cf.cMaxPageNum);
 
-            } else if ('getdistall' === _instruct) {
+            }
+            //生成所有行政区
+            else if ('getdistall' === _instruct) {
                 ut.showLog('生成各城市的采集脚本......');
                 ///ershoufang/ <-不含板块的名字，只找第一个<div>来定位行政区链接列表
                 getDistAll();
-            }else if ('dchr' === _instruct) {
+            } else if ('dchr' === _instruct) {
                 if (gZone === undefined) {
                     ut.showLog('未指定板块名，应指定板块名！');
                 } else {
@@ -169,10 +168,10 @@ function main() {
 
             else if ('stat' === _instruct) {
                 ut.showLog('开始采集房源汇总数......');
-                let url = 'https://'+args[1]+'.lianjia.com';
+                let url = 'https://' + args[1] + '.lianjia.com';
                 dc.dcs(url, '/', statPaser, statDp, cf.cMaxPageNum);
 
-            }else if ('city' === _instruct) {
+            } else if ('city' === _instruct) {
                 ut.showLog('开始采集城市......');
                 dc.dcs(gSiteUrl, '/city/', cityPaser, cityDp, cf.cMaxPageNum);
 
@@ -184,7 +183,7 @@ function main() {
                 ut.showLog('开始导出数据......');
                 exportBroker2();
 
-            }else if ('getbroker' === _instruct) {
+            } else if ('getbroker' === _instruct) {
                 ut.showLog('开始解析和经纪人信息......');
                 //ao22成交量从高到低
                 dc.dcs(gSiteUrl, '/jingjiren/' + gZone + '/ao22/', brokerPaser, brokerDp, cf.cMaxPageNum);
@@ -219,71 +218,73 @@ function main() {
  * 生成脚本文件，该脚本中的内容是生成所有城市的房源和经纪人采集脚本
  * 场景：esf、jjr的模板修改后，需要重新执行node dc_common.js getdistall sh
  */
-function  getDistAll (){
+function getDistAll() {
     let cmd = '\n';
-    Object.keys(cf.cities).forEach((item)=>{
-        cmd +=gCmd+' getdist '+item+'. \n';
+    Object.keys(cf.cities).forEach((item) => {
+        cmd += gCmd + ' getdist ' + item + '. \n';
     });
-    ut.wf('get_dist_all'+gFilePostFix,cmd);
+    ut.wf('get_dist_all' + gFilePostFix, cmd);
 }
 
-function  genRentScript (){
+function genRentScript() {
     let cmd = '\n';
     //获取所有小区的编号和名字列表
-    dbut.findFromDb(gDsName+'zone',{},300,cf.cDburl,(hrs,db)=>{
-        hrs.map((item,index,arr)=>{
-            cmd +=gCmd+'  dcesfrent '+gCity+'.'+item.url.replace(gSiteUrl+'/xiaoqu/','').replace('/','')+' \n';
+    dbut.findFromDb(gDsName + 'zone', {}, 300, cf.cDburl, (hrs, db) => {
+        hrs.map((item, index, arr) => {
+            cmd += gCmd + '  dcesfrent ' + gCity + '.' + item.url.replace(gSiteUrl + '/xiaoqu/', '').replace('/', '') + ' \n';
         });
-        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+        cmd += gCmd + '  save_rent_rsr ' + gCity + '.\n';
 
         //生成采集所有小区租赁信息的脚本
-        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+        ut.wf('gen_rentall_' + gCity + gFilePostFix, cmd);
     });
 }
-function  genRentScript2 (){
+
+function genRentScript2() {
     let cmd = '\n';
     //获取所有小区的编号和名字列表
     console.log('开始生成租赁房采集脚本......')
-    dbut.findFromDb(gDsName+'dist',{},2000,cf.cDburl,(dists,db)=>{
+    dbut.findFromDb(gDsName + 'dist', {}, 2000, cf.cDburl, (dists, db) => {
 
         let leftCounter = 0;
 
-        dists.map((dist,index1,arr1)=>{
-            dist.zones.map((zone,index2,arr2)=> {
+        dists.map((dist, index1, arr1) => {
+            dist.zones.map((zone, index2, arr2) => {
                 leftCounter++;
             });
         });
 
-        dists.map((dist,index1,arr1)=>{
-            dist.zones.map((zone,index2,arr2)=> {
-                let zone_code = zone.url.replace('/ershoufang/','').replace('/','');
-                cmd += gCmd + '  dcesfrent '        + gCity + '.' + zone_code+' \n';
-                cmd += gCmd + '  gen_rsr_of_zone '  + gCity + '.' + zone_code+' \n';
-                cmd += 'echo '+ (--leftCounter)+' \n';
+        dists.map((dist, index1, arr1) => {
+            dist.zones.map((zone, index2, arr2) => {
+                let zone_code = zone.url.replace('/ershoufang/', '').replace('/', '');
+                cmd += gCmd + '  dcesfrent ' + gCity + '.' + zone_code + ' \n';
+                cmd += gCmd + '  gen_rsr_of_zone ' + gCity + '.' + zone_code + ' \n';
+                cmd += 'echo ' + (--leftCounter) + ' \n';
             });
         });
-        cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
+        cmd += gCmd + '  save_rent_rsr ' + gCity + '.\n';
 
         //生成采集所有小区租赁信息的脚本
-        ut.wf('gen_rentall_'+gCity+gFilePostFix,cmd);
+        ut.wf('gen_rentall_' + gCity + gFilePostFix, cmd);
         console.log('完成');
     });
 }
-function  genRentScript3 (){
+
+function genRentScript3() {
     let cmd = '\n';
     let _head = ut.rf('dcheadrent.sh.tplt');
     let _foot = ut.rf('dcfootrent.sh.tplt');
 
     //获取所有小区的编号和名字列表
     console.log('开始生成租赁房采集脚本......');
-    dbut.findFromDb(gDsName+'zone',{'rentamt2':{$gt:0}},30000,cf.cDburl,(hrs,db)=>{
+    dbut.findFromDb(gDsName + 'zone', {'rentamt2': {$gt: 0}}, 30000, cf.cDburl, (hrs, db) => {
 
         let leftCounter = hrs.length;
 
-        hrs.map((item,index,arr1)=> {
+        hrs.map((item, index, arr1) => {
 
-            if(!item.rentamt){
-                console.log(item.hrname+' 数据存在缺失，请确认是否采集完整或网站中的相关信息存在缺失 '+item.url);
+            if (!item.rentamt) {
+                console.log(item.hrname + ' 数据存在缺失，请确认是否采集完整或网站中的相关信息存在缺失 ' + item.url);
             }
             else if (Number(item.rentamt.replace('套正在出租', '')) > 0) {
                 let hrid = item.url.replace(gSiteUrl + '/xiaoqu/', '').replace('/', '');
@@ -291,13 +292,13 @@ function  genRentScript3 (){
                 cmd += gCmd + '  gen_rsr_of_zone ' + gCity + '.' + hrid + ' \n';
                 cmd += 'echo ' + (--leftCounter) + ' \n';
             } else {
-                console.log(item.hrname+' 没有租赁房源 '+item.url);
+                console.log(item.hrname + ' 没有租赁房源 ' + item.url);
             }
         });
         //cmd +=gCmd+'  save_rent_rsr '+gCity+'.\n';
 
         //生成采集所有小区租赁信息的脚本
-        ut.wf('gen_rentall_'+gCity+gFilePostFix,(_head+cmd+_foot).replace(/{city}/g, gCity));
+        ut.wf('gen_rentall_' + gCity + gFilePostFix, (_head + cmd + _foot).replace(/{city}/g, gCity));
         console.log('完成');
     });
 }
@@ -324,10 +325,10 @@ function statPaser(html, dataProcessor) {
         let d = $(this);  //每条记录
         let _link = d.text();
         let dataarr = _link.split(' ');
-        if(dataarr[0].indexOf('租')>=0)
-            d2['rentamt']= Number(dataarr[1]);
-        if(dataarr[0].indexOf('二手房')>=0)
-            d2['esfamt']= Number(dataarr[1]);
+        if (dataarr[0].indexOf('租') >= 0)
+            d2['rentamt'] = Number(dataarr[1]);
+        if (dataarr[0].indexOf('二手房') >= 0)
+            d2['esfamt'] = Number(dataarr[1]);
 
         d2['cityname'] = dataarr[0].split('链家')[0]
     });
@@ -346,7 +347,7 @@ function statDp(datas) {
     console.log(datas);
     //gCitys.push(datas);
     datas['updt'] = ut.getToday();
-    dbut.save2db('city2',[datas],cf.cDburl);
+    dbut.save2db('city2', [datas], cf.cDburl);
 }
 
 function cityPaser(html, dataProcessor) {
@@ -362,7 +363,7 @@ function cityPaser(html, dataProcessor) {
         let d = $(this);  //每条记录
         let cityname = d.text();
         let _link = d.attr('href');
-        d2.push({'cityname':cityname,'url':_link});
+        d2.push({'cityname': cityname, 'url': _link});
     });
     dataProcessor(d2);
     return '';
@@ -376,15 +377,15 @@ function cityPaser(html, dataProcessor) {
 function cityDp(datas) {
     let cmd = ut.rf('dcheadenv.tplt');
     let cmdCron = '\n';
-    datas.forEach((item,index,arr)=>{
-        let cityCode = item.url.replace('.lianjia.com/','').replace('https://','');
-        cmd = cmd + gCmd + ' stat '+cityCode+ '\n';
-        if(cityCode.indexOf('.fang')<0){
-            cmdCron = cmdCron+ '15   '+index%23+' * * '+index%6+'  root /root/workspace/nodejs/cheerio/lj'+cityCode+'.sh >> /root/workspace/nodejs/cheerio/log/lj'+cityCode+'.log 2>&1 &'+'\n';
+    datas.forEach((item, index, arr) => {
+        let cityCode = item.url.replace('.lianjia.com/', '').replace('https://', '');
+        cmd = cmd + gCmd + ' stat ' + cityCode + '\n';
+        if (cityCode.indexOf('.fang') < 0) {
+            cmdCron = cmdCron + '15   ' + index % 23 + ' * * ' + index % 6 + '  root /root/workspace/nodejs/cheerio/lj' + cityCode + '.sh >> /root/workspace/nodejs/cheerio/log/lj' + cityCode + '.log 2>&1 &' + '\n';
         }
     });
-    ut.wf('get_city' + gFilePostFix,cmd );
-    ut.wf('cron_list' +gFilePostFix,cmdCron);
+    ut.wf('get_city' + gFilePostFix, cmd);
+    ut.wf('cron_list' + gFilePostFix, cmdCron);
 }
 
 
@@ -413,7 +414,7 @@ function distPaser(html, dataProcessor) {
 
 
     //将北京的最后四个郊县排除，因为这四个郊县的域名是lf.lianjia.com开始会导致程序报错，还容易导致
-    (gCity==='bj')? gDistricts.splice(gDistricts.length-4,4):'';
+    (gCity === 'bj') ? gDistricts.splice(gDistricts.length - 4, 4) : '';
 
     //将行政区和板块信息入库
     dataProcessor(gDistricts);
@@ -447,46 +448,51 @@ function zonePaser(html, dataProcessor) {
 
     //加载页面内容
     let $ = cheerio.load(html);
-    try{
-    //定位到板块的链接信息区div
-    let zones = $('div.m-filter').find('.position').find('div[data-role="ershoufang"]').find('div')['1'];
-    //定位所有的链接
-    zones = $('a', zones);
+    try {
+        //定位到板块的链接信息区div
+        let zones = $('div.m-filter').find('.position').find('div[data-role="ershoufang"]').find('div')['1'];
+        //定位所有的链接
+        zones = $('a', zones);
 
-    //解析url和板块名
-    zones.each(function () {
-        let z = $(this);
+        //解析url和板块名
+        zones.each(function () {
+            let z = $(this);
 
-        //解析url和板块名称
-        let _link = z.attr('href');
-        let _zoneName = z.text();
+            //解析url和板块名称
+            let _link = z.attr('href');
+            let _zoneName = z.text();
 
-        //解析过程中顺便生成板块采集的命令行脚本
-        let cmdArea = gCity + '.' + _link.replace('\/ershoufang\/', '').replace('\/', '');
-        let _dcHrcmd = gCmd + ' dchr ' + cmdArea;
-        let _dcEsfcmd = gCmd + ' dcesf ' + cmdArea;
-        gCurrentZones.push({'zn': _zoneName, 'url': _link, 'dchrcmd': _dcHrcmd, 'dcesfcmd': _dcEsfcmd});
-    });
+            if (_link) {
+                //解析过程中顺便生成板块采集的命令行脚本
+                let cmdArea = gCity + '.' + _link.replace('\/ershoufang\/', '').replace('\/', '');
+                let _dcHrcmd = gCmd + ' dchr ' + cmdArea;
+                let _dcEsfcmd = gCmd + ' dcesf ' + cmdArea;
+                gCurrentZones.push({'zn': _zoneName, 'url': _link, 'dchrcmd': _dcHrcmd, 'dcesfcmd': _dcEsfcmd});
+            } else {
+                console.log('=====', _link, _zoneName)
+            }
 
-    //解析完成后，将数据以元素的方式加载到行政区数组中
-    Object.assign(gDistricts[gCurrentPageNum], {'zones': gCurrentZones});
+        });
+
+        //解析完成后，将数据以元素的方式加载到行政区数组中
+        Object.assign(gDistricts[gCurrentPageNum], {'zones': gCurrentZones});
 
 
-    //根据行政区的总数量判断是否有下一页要采集
-    gTotalPage =gDistricts.length;
-    console.log((gCurrentPageNum + 1) + '/', gTotalPage);
-    if (gCurrentPageNum < gTotalPage - 1) {
-        gNextPageUrl = gDistricts[gCurrentPageNum + 1].url;
-        gCurrentPageNum++;
+        //根据行政区的总数量判断是否有下一页要采集
+        gTotalPage = gDistricts.length;
+        console.log((gCurrentPageNum + 1) + '/', gTotalPage);
+        if (gCurrentPageNum < gTotalPage - 1) {
+            gNextPageUrl = gDistricts[gCurrentPageNum + 1].url;
+            gCurrentPageNum++;
 
-    } else {
-        gNextPageUrl = '';
-        //已完成全部翻页操作，对数据保存到数据库
-        dataProcessor(gDistricts);
-    }
+        } else {
+            gNextPageUrl = '';
+            //已完成全部翻页操作，对数据保存到数据库
+            dataProcessor(gDistricts);
+        }
 
-    }catch(e){
-        console.error('解析行政区和板块发生错误',e)
+    } catch (e) {
+        console.error('解析行政区和板块发生错误', e)
     }
     //行政区的采集不是靠翻页，所以将下一页的url设置为''
     return gNextPageUrl;
@@ -512,15 +518,15 @@ function hrPaser(html, dataProcessor) {
         let zone = $(this);
 
         let dblk = zone.find('div.title').find('a');
-        let _hrname     = dblk.text(); //ut.showLog(_hrname);
-        let _url        = dblk.attr('href');
-        let _rent_url   = _url.replace('/xiaoqu/','/zufang/c');
+        let _hrname = dblk.text(); //ut.showLog(_hrname);
+        let _url = dblk.attr('href');
+        let _rent_url = _url.replace('/xiaoqu/', '/zufang/c');
 
         dblk = zone.find('div.houseInfo');
         let sellAndRent = dblk.text().trim();
-        let _sellAmt    = sellAndRent.split('|')[0].trim();
-        let _rentAmt    = sellAndRent.split('|')[1].trim();
-        let _rentAmt2   = Number(_rentAmt.replace('套正在出租',''));
+        let _sellAmt = sellAndRent.split('|')[0].trim();
+        let _rentAmt = sellAndRent.split('|')[1].trim();
+        let _rentAmt2 = Number(_rentAmt.replace('套正在出租', ''));
 
         dblk = zone.find('div.positionInfo');
         let positonInfo = dblk.text().split('/');
@@ -528,7 +534,7 @@ function hrPaser(html, dataProcessor) {
         let _dist = ttt.split('\n')[0];
         let _zone = ttt.split('\n')[1].trim();
         let _bdyear = '未设置';
-        if(positonInfo.length>1)
+        if (positonInfo.length > 1)
             _bdyear = positonInfo[1].trim(); //有的城市中，小区信息不含年份
 
 
@@ -574,9 +580,7 @@ function hrPaser(html, dataProcessor) {
 
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            console.log(temp);
-            //nextPageUrl = temp.replace('{page}', curPage + 1);
-            nextPageUrl = '/xiaoqu/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
+            nextPageUrl = '/xiaoqu/' + gZone + '/pg' + (curPage + 1) + temp.split('{page}')[1]+'/';
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -597,91 +601,90 @@ function esfPaserRent(html, dataProcessor) {
 
     //console.log(html); //若网站内容发生改版了，则可以取消注释本行代码，查看实际页面应答结果的内容
 
-     let nextPageUrl = '';
+    let nextPageUrl = '';
 
     //加载页面内容
-     let $ = cheerio.load(html);
+    let $ = cheerio.load(html);
 
 
     //基于上级节点(div.content__list)定位列表中的每一条记录的节点，在遍历每条记录的过程中解析数据，生成数组
     let lc = $('div.content__list--item', 'div.content__list');
     console.log(lc.length);
-    if(!lc||lc.length===0){
-        console.log(gHrid+'小区内没有租赁房源');
+    if (!lc || lc.length === 0) {
+        console.log(gHrid + '小区内没有租赁房源');
         return '';
     }
 
 
-     lc.each(function () {
-         let esf = $(this);  //每条记录
+    lc.each(function () {
+        let esf = $(this);  //每条记录
 
-         let dblk = esf.find('p.content__list--item--title.twoline').find('a');
-         let _title = dblk.text().trim(); //标题
-         let _url = dblk.attr('href');//url
-         let _hrurl = gSiteUrl+'/'+gHrid+'/'; //小区url
-
-
-         dblk = esf.find('p.content__list--item--des');
-         let desc = dblk.text().trim().split('/');
-         let _drct      = desc[0].trim().split('-')[0];
-         let _zone    = desc[0].trim().split('-')[1];
-         let _size      = Number(desc[1].trim().replace('㎡',''));
-         let _layout    = desc[3].trim();
-
-         let _hrnum = gHrid;    //由命令行参数提供
+        let dblk = esf.find('p.content__list--item--title.twoline').find('a');
+        let _title = dblk.text().trim(); //标题
+        let _url = dblk.attr('href');//url
+        let _hrurl = gSiteUrl + '/' + gHrid + '/'; //小区url
 
 
+        dblk = esf.find('p.content__list--item--des');
+        let desc = dblk.text().trim().split('/');
+        let _drct = desc[0].trim().split('-')[0];
+        let _zone = desc[0].trim().split('-')[1];
+        let _size = Number(desc[1].trim().replace('㎡', ''));
+        let _layout = desc[3].trim();
 
-         dblk = esf.find('p.content__list--item--brand.oneline');
-         let _source = dblk.text().trim();
-
-
-         dblk = esf.find('p.content__list--item--time.oneline');
-         let _time = dblk.text();
-
-
-         //TODO:优化tags解析方法
-         // dblk = esf.find('p.content__list--item--bottom.oneline');
-         // let _tags = $('i',dblk);
-         // let tl = _tags.length;
-         // let keys = Object.keys(_tags);
+        let _hrnum = gHrid;    //由命令行参数提供
 
 
-         dblk = esf.find('span.content__list--item-price');
-         let _rprice = $('em',dblk).text();
-         _rprice = Number(_rprice);
-
-         let rentInfo = {
-             title:_title,
-             rprice : _rprice,
-             size:_size,
-             urprice : Number((((_rprice*100)/_size)/100).toFixed(2)),
-             hrurl : _hrurl,
-             url:_url,
-             hrnum:_hrnum,
-             zone:_zone,
-             drct:_drct,
-             layout:_layout,
-             source:_source,
-             time:_time,
-             //zone_code:gHrs[_hrnum].zone
-         };
-
-         gTotalRent.push(rentInfo);
+        dblk = esf.find('p.content__list--item--brand.oneline');
+        let _source = dblk.text().trim();
 
 
-         /**
-          * 采集每套租赁房源的租金、面积，保存到数组中
-          * 在采集完成后，遍历数组，将总金额/总面积，得到每平米的租金
-          * 将每平米租金*12即得到该小区每平米的每年的现金流
-          * 将年现金流更新到该小区的记录中
-          *
-          * 创建一个查询，计算：租售比=（每平米年现金流/单价），按照租售比降序排列
-          * 显示小区名、板块、行政区、租售比
-          * @type {number}
-          */
+        dblk = esf.find('p.content__list--item--time.oneline');
+        let _time = dblk.text();
 
-         let a = 1;
+
+        //TODO:优化tags解析方法
+        // dblk = esf.find('p.content__list--item--bottom.oneline');
+        // let _tags = $('i',dblk);
+        // let tl = _tags.length;
+        // let keys = Object.keys(_tags);
+
+
+        dblk = esf.find('span.content__list--item-price');
+        let _rprice = $('em', dblk).text();
+        _rprice = Number(_rprice);
+
+        let rentInfo = {
+            title: _title,
+            rprice: _rprice,
+            size: _size,
+            urprice: Number((((_rprice * 100) / _size) / 100).toFixed(2)),
+            hrurl: _hrurl,
+            url: _url,
+            hrnum: _hrnum,
+            zone: _zone,
+            drct: _drct,
+            layout: _layout,
+            source: _source,
+            time: _time,
+            //zone_code:gHrs[_hrnum].zone
+        };
+
+        gTotalRent.push(rentInfo);
+
+
+        /**
+         * 采集每套租赁房源的租金、面积，保存到数组中
+         * 在采集完成后，遍历数组，将总金额/总面积，得到每平米的租金
+         * 将每平米租金*12即得到该小区每平米的每年的现金流
+         * 将年现金流更新到该小区的记录中
+         *
+         * 创建一个查询，计算：租售比=（每平米年现金流/单价），按照租售比降序排列
+         * 显示小区名、板块、行政区、租售比
+         * @type {number}
+         */
+
+        let a = 1;
 
     });
     //
@@ -829,8 +832,11 @@ function esfPaser(html, dataProcessor) {
         dblk = esf.find('.followInfo');
         tmp = dblk.text().split('/');
         let _favAmt = Number(tmp[0].replace('人关注', '').trim());
-        let _seeAmt = Number(tmp[1].replace('共', '').replace('次带看', '').trim());
-        let _askTime = tmp[2].replace('以前发布', '').trim();
+        let _askTime = tmp[1].replace('以前发布', '').trim();
+
+        //20190710 网站取消了带看人数信息
+        //let _seeAmt = Number(tmp[1].replace('共', '').replace('次带看', '').trim());
+        //let _seeAmt = 0 ;
 
 
         let _tags = [];
@@ -861,7 +867,7 @@ function esfPaser(html, dataProcessor) {
             tprice: _tprice,    //总价，
             hrname: _hrname,    //小区名
             favamt: _favAmt,    //关注人数
-            seeamt: _seeAmt,    //带看次数
+            //seeamt: _seeAmt,    //带看次数
             asktime: _askTime,   //挂牌时间
             deco: _deco,      //装修
             floor: _floor,      //楼层
@@ -885,10 +891,10 @@ function esfPaser(html, dataProcessor) {
         };
 
         //获取地铁距离信息，为计算折扣准备
-        let subwayInfo = esfInfo.tags.filter(function (item,index,arrs) {
-            if(item.subway) return item.subway;
+        let subwayInfo = esfInfo.tags.filter(function (item, index, arrs) {
+            if (item.subway) return item.subway;
         });
-        subwayInfo = subwayInfo.length===1?subwayInfo[0]['subway']:'';
+        subwayInfo = subwayInfo.length === 1 ? subwayInfo[0]['subway'] : '';
 
 
         //根据房源的信息计算核定折扣，这个步骤也可以在采集数据后批量操作。
@@ -918,11 +924,7 @@ function esfPaser(html, dataProcessor) {
         console.log(curPage + '/' + gTotalPage);
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
-            //console.log(temp);
-            //let nextPageUrl2 = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
-            //console.log(nextPageUrl2);
-            //nextPageUrl = temp.replace('{page}', curPage + 1);
-            nextPageUrl = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
+            nextPageUrl = '/ershoufang/' + gZone + '/pg' + (curPage + 1) + temp.split('{page}')[1]+'/';
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -946,13 +948,13 @@ function esfPaser4bj(html, dataProcessor) {
     let nextPageUrl = '';
 
 
-        let results = [];//对数据解析后的内容
-        //ut.wf(gZone + '-esf-content.html', html);
-        let _nowtime = ut.formatDate(new Date(), 'hhmmss');
+    let results = [];//对数据解析后的内容
+    //ut.wf(gZone + '-esf-content.html', html);
+    let _nowtime = ut.formatDate(new Date(), 'hhmmss');
 
 
-        //加载页面内容
-        let $ = cheerio.load(html);
+    //加载页面内容
+    let $ = cheerio.load(html);
     try {
 
         //解析行政区与板块信息。定位【指定属性名、属性值(data-role="ershoufang")】的节点下的class=selected属性
@@ -966,8 +968,8 @@ function esfPaser4bj(html, dataProcessor) {
         let lc = $('li.clear', '.sellListContent');
         lc.each(function () {
             let esf = $(this);  //每条记录
-            let tmp = '';       //用来临时保存从dblk解析出的包含多个信息项的临时变量
-            let esfInfo = { cd: cCurrentDate,       //当前日期
+            let esfInfo = {
+                cd: cCurrentDate,       //当前日期
                 ct: _nowtime, //时间戳
                 ds: gDsName       //数据源：链家
             };
@@ -1006,7 +1008,7 @@ function esfPaser4bj(html, dataProcessor) {
 
 
             if (tmp.length === 6) {
-            esfInfo['elvt'] = tmp[5];//电梯
+                esfInfo['elvt'] = tmp[5];//电梯
             }
 
 
@@ -1048,9 +1050,7 @@ function esfPaser4bj(html, dataProcessor) {
             esfInfo['zoneurl'] = $('a', dblk).attr('href');
 
 
-            let _favAmt = 0;
-            let _seeAmt = 0;
-            let _askTime = 0;
+
             dblk = esf.find('.followInfo');
             tmp = dblk.text().split(spliter);
 
@@ -1058,7 +1058,7 @@ function esfPaser4bj(html, dataProcessor) {
             esfInfo['favamt'] = Number(tmp[0].replace('人关注', '').trim());
 
             //_seeAmt = Number(tmp[1].split('次带看')[0])
-            esfInfo['seeamt'] = Number(tmp[1].split('次带看')[0]);
+            //esfInfo['seeamt'] = Number(tmp[1].split('次带看')[0]);
 
             esfInfo['asktime'] = $('div.timeInfo', dblk).text();
 
@@ -1099,9 +1099,8 @@ function esfPaser4bj(html, dataProcessor) {
             }
         });
 
-    }catch(e)
-    {
-        console.error('解析错误',e);
+    } catch (e) {
+        console.error('解析错误', e);
     }
 
     //根据页码区域的数值，计算是否有下一页
@@ -1114,7 +1113,7 @@ function esfPaser4bj(html, dataProcessor) {
         if (curPage < gTotalPage) {
             let temp = dblk.attr('page-url');
             //nextPageUrl = temp.replace('{page}', curPage + 1);
-            nextPageUrl = '/ershoufang/'+gZone+'/pg'+(curPage + 1)+temp.split('{page}')[1];
+            nextPageUrl = '/ershoufang/' + gZone + '/pg' + (curPage + 1) + temp.split('{page}')[1]+ '/';
             gCurrentPageNum++;
         } else {
             nextPageUrl = '';
@@ -1149,7 +1148,7 @@ function brokerPaser(html, dataProcessor) {
 
 
     //页面内容中若包含反采集的关键字（神秘的力量.....）,则睡眠一会后再采集上一页信息
-    if(html.indexOf(cf.cAntiDcKeyWord)>0){
+    if (html.indexOf(cf.cAntiDcKeyWord) > 0) {
         setTimeout(function () {
             console.warn('休息一会.....');
             return gNextPageUrl;
@@ -1225,10 +1224,9 @@ function brokerPaser(html, dataProcessor) {
     });
 
 
-
     //根据页码区域的数值，计算是否有下一页
     let dblk = $('.house-lst-page-box');
-    if(dblk.length===0) return "";  //没有上述标记，表示只有一页，且少于30条记录
+    if (dblk.length === 0) return "";  //没有上述标记，表示只有一页，且少于30条记录
     try {
         let pageInfo = JSON.parse(dblk.attr('page-data'));//翻页信息
         gTotalPage = Number(pageInfo.totalPage);
@@ -1305,7 +1303,7 @@ function rentDp(rents) {
 function genRsrOfZone() {
     MongoClient.connect(cf.cDburl, function (err, db) {
         assert.equal(null, err);
-        let collection = db.collection(gDsName+'_rent'); //哪个表
+        let collection = db.collection(gDsName + '_rent'); //哪个表
 
         collection.find({'zone_code': gZone})
             .sort({'hrurl': 1}).toArray(function (err, docs) {
@@ -1324,25 +1322,25 @@ function genRsrOfZone() {
                 }
                 hrs[item.hrnum]['total_size'] = item.size + hrs[item.hrnum]['total_size'];
                 hrs[item.hrnum]['total_price'] = item.rprice + hrs[item.hrnum]['total_price'];
-                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price']*12/hrs[item.hrnum]['total_size']).toFixed(0));
-                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;
+                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price'] * 12 / hrs[item.hrnum]['total_size']).toFixed(0));
+                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt'] + 1;
             });
             console.log(Object.keys(hrs).length, hrs);
 
 
             let records = Object.keys(hrs);
             //遍历当前板块中的小区，更新到ljsh_zone中
-            records.map((item,index,arr)=>{
+            records.map((item, index, arr) => {
 
                 MongoClient.connect(cf.cDburl, function (err, db) {
                     assert.equal(err, null);
-                    let coll = db.collection(gDsName+'zone');
+                    let coll = db.collection(gDsName + 'zone');
                     let t = require('assert');
 
                     try {
                         for (let i = 0; i < records.length; i++) {
                             let record = hrs[item];
-                            let url = gSiteUrl+'/xiaoqu/'+item+'/';
+                            let url = gSiteUrl + '/xiaoqu/' + item + '/';
 
                             coll.updateOne(
                                 {'url': url},
@@ -1370,7 +1368,7 @@ function genRsrOfZone() {
 function genRsrOfHr() {
     MongoClient.connect(cf.cDburl, function (err, db) {
         assert.equal(null, err);
-        let collection = db.collection(gDsName+'_rent'); //哪个表
+        let collection = db.collection(gDsName + '_rent'); //哪个表
 
         collection.find({'hrnum': gHrid}).toArray(function (err, docs) {
             assert.equal(null, err);
@@ -1388,25 +1386,25 @@ function genRsrOfHr() {
                 }
                 hrs[item.hrnum]['total_size'] = item.size + hrs[item.hrnum]['total_size'];
                 hrs[item.hrnum]['total_price'] = item.rprice + hrs[item.hrnum]['total_price'];
-                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price']*12/hrs[item.hrnum]['total_size']).toFixed(0));
-                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt']+1;//rent_amt是根据该小区内实际的房源统计出来的值，rentamt2是小区信息中显示的值，应该以rent_amt为准
+                hrs[item.hrnum]['ruprice'] = Number((hrs[item.hrnum]['total_price'] * 12 / hrs[item.hrnum]['total_size']).toFixed(0));
+                hrs[item.hrnum]['rent_amt'] = hrs[item.hrnum]['rent_amt'] + 1;//rent_amt是根据该小区内实际的房源统计出来的值，rentamt2是小区信息中显示的值，应该以rent_amt为准
             });
             console.log(Object.keys(hrs).length, hrs);
 
 
             let records = Object.keys(hrs);
             //遍历当前板块中的小区，更新到ljsh_zone中
-            records.map((item,index,arr)=>{
+            records.map((item, index, arr) => {
 
                 MongoClient.connect(cf.cDburl, function (err, db) {
                     assert.equal(err, null);
-                    let coll = db.collection(gDsName+'zone');
+                    let coll = db.collection(gDsName + 'zone');
                     let t = require('assert');
 
                     try {
                         for (let i = 0; i < records.length; i++) {
                             let record = hrs[item];
-                            let url = gSiteUrl+'/xiaoqu/'+item+'/';
+                            let url = gSiteUrl + '/xiaoqu/' + item + '/';
 
                             coll.updateOne(
                                 {'url': url},
@@ -1474,7 +1472,7 @@ function zoneDp(districts) {
         //逐板块采集经纪人（适用于一个行政区中超过100页经纪人的场景
         brokerCmd += 'echo ' + (index + 1) + '\/' + districts.length + ' \n'; //按行政区的数量生成进度
         item.zones.forEach(function (item2) {
-            brokerCmd += gCmd+' getbroker ' + gCity + '.' + item2.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
+            brokerCmd += gCmd + ' getbroker ' + gCity + '.' + item2.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
         });
         index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
             brokerCmd += 'echo  complete \n' :
@@ -1482,8 +1480,8 @@ function zoneDp(districts) {
 
         //逐行政区采集经纪人
         brokerCmd2 += 'echo ' + (index + 1) + '\/' + districts.length + ' \n'; //按行政区的数量生成进度
-        brokerCmd2 += gCmd+' getbroker ' + gCity + '.' + item.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
-            index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
+        brokerCmd2 += gCmd + ' getbroker ' + gCity + '.' + item.url.replace(/\//g, '').replace('ershoufang', '') + ' \n';
+        index === districts.length - 1 ?    //如果是最后一条，则显示进度完成
             brokerCmd2 += 'echo  complete \n' :
             '';
     });
@@ -1504,11 +1502,11 @@ function zoneDp(districts) {
     if (os.type() !== 'Linux') {
         ut.wf('jjr-bydist-dev-' + gDsName + gFilePostFix, (brokerCmd2).replace(/{city}/g, gCity));
         ut.wf('jjr-byzone-dev-' + gDsName + gFilePostFix, (brokerCmd).replace(/{city}/g, gCity));
-    }else{ //只在生产环境中执行为脚本授权的操作。
+    } else { //只在生产环境中执行为脚本授权的操作。
         let exec = require('child_process').exec;
         let cmd = 'chmod +x *.sh';
         exec(cmd, function (error, stdout, stderr) {
-            console.log('请确认生成的sh脚本是否有可执行权限！','ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
+            console.log('请确认生成的sh脚本是否有可执行权限！', 'ostype', os.type(), 'error', error, 'stdout', stdout, 'stderr', stderr);
         });
     }
 
@@ -1572,7 +1570,7 @@ function export2xls(dburl, tbname) {
 
                 if (i === result.length - 1) {
                     ut.exp2xls(data_content, cf.cExlExpPath, tbname + '-' + ut.getToday());
-                    dbut.save2db(tbname+'_result',data_content,cf.cDburl);
+                    //dbut.save2db(tbname + '_result', data_content, cf.cDburl);
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
@@ -1618,7 +1616,7 @@ function save2bamboo(dburl, tbname) {
                                 esf[fieldName] = esf[fieldName].toFixed(2);
                             }
                         }
-                        record[fieldName]=esf[fieldName];
+                        record[fieldName] = esf[fieldName];
                     }
                     //将单条房源记录加入到所有记录中
                     data_content.push(record);
@@ -1627,8 +1625,8 @@ function save2bamboo(dburl, tbname) {
                 //console.log(data_content);
 
                 if (i === result.length - 1) {
-                    console.log('',typeof(data_content),data_content.length);
-                    dbut.save2db(tbname+'_result',data_content,cf.cDburl);
+                    console.log('', typeof(data_content), data_content.length);
+                    dbut.save2db(tbname + '_result', data_content, cf.cDburl);
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
@@ -1744,7 +1742,7 @@ function selectData4(db, tbname, callback) {
         ut.showLog('完成查询' + result.length + '条');
 
         db.close();
-        if(callback) callback(result);
+        if (callback) callback(result);
     });
 }
 
@@ -1753,7 +1751,7 @@ function saveRentRsr() {
     MongoClient.connect(cf.cDburl, function (err, db) {
 
         ut.showLog('开始连接DB');
-        selectData4(db, gDsName+'zone', function (result) {
+        selectData4(db, gDsName + 'zone', function (result) {
 
             let data_content = [];
 
@@ -1764,33 +1762,33 @@ function saveRentRsr() {
 
                 //只导出笋值小于阀值的数据和存在异常的数据
                 // if (esf['rsr'] <= cf.bsrLessThen || isNaN(esf['rsr'])) {
-                    //将每条房源的各个字段信息转换成数组，组装成一条房源记录
-                    let record = {};
+                //将每条房源的各个字段信息转换成数组，组装成一条房源记录
+                let record = {};
 
-                    //根据配置的列名顺序来组装导出每一条要导出的数据
-                    let fieldNameList = Object.keys(cf.cRentFieldsValue);
-                    for (let j = 1; j < fieldNameList.length; j++) {
-                        let fieldName = fieldNameList[j];
+                //根据配置的列名顺序来组装导出每一条要导出的数据
+                let fieldNameList = Object.keys(cf.cRentFieldsValue);
+                for (let j = 1; j < fieldNameList.length; j++) {
+                    let fieldName = fieldNameList[j];
 
-                        if (fieldName === 'rsr') {
-                            if (esf[fieldName] === null) {
-                                ut.showLog('以下rsr为空，建议排查原因:');
-                                ut.showLog(JSON.stringify(esf));
-                            } else {
-                                esf[fieldName] = (100*esf[fieldName]).toFixed(2);
-                            }
+                    if (fieldName === 'rsr') {
+                        if (esf[fieldName] === null) {
+                            ut.showLog('以下rsr为空，建议排查原因:');
+                            ut.showLog(JSON.stringify(esf));
+                        } else {
+                            esf[fieldName] = Number((100 * esf[fieldName]).toFixed(2));
                         }
-                        record[fieldName]=esf[fieldName];
                     }
-                    //将单条房源记录加入到所有记录中
-                    data_content.push(record);
+                    record[fieldName] = esf[fieldName];
+                }
+                //将单条房源记录加入到所有记录中
+                data_content.push(record);
                 // }
 
                 //console.log(data_content);
 
                 if (i === result.length - 1) {
-                    console.log('',typeof(data_content),data_content.length);
-                    dbut.save2db(gDsName+'_rentrsr',data_content,cf.cDburl);
+                    console.log('', typeof(data_content), data_content.length);
+                    dbut.save2db(gDsName + '_rentrsr', data_content, cf.cDburl);
                 }
             }
             db.close(); //不关闭数据库，则有可能会导致进程一致不对出，挂起。
@@ -1825,7 +1823,7 @@ function setEsfDisct(esfs, db) {
             let _bdyear = esf.bdyear;
             if (!ut.isNumber(_bdyear))
                 _bdyear = 9999;
-            let disct = getDisctCfm(esf.size, esf.tprice, _bdyear,esf.floor);
+            let disct = getDisctCfm(esf.size, esf.tprice, _bdyear, esf.floor);
 
             let col = db.collection(gDsName + 'esf');
             col.updateMany(
@@ -1852,7 +1850,7 @@ function setEsfDisct(esfs, db) {
  * @param bdyear
  * @returns {{sized: 面积维度的折扣率, tpriced: {tpriced: number}, bdyeard: {bdyeard: number}, cfmd: string}}
  */
-function getDisctCfm(size, tprice, bdyear,floor) {
+function getDisctCfm(size, tprice, bdyear, floor) {
 
     let sizeDisct = getDisct4Size(size);
     let tpriceDisct = getDisct4Tprice(tprice);
@@ -2000,14 +1998,14 @@ function getDisct4Floor(floorType) {
     let edIndex = floorType.indexOf('层)');
 
     //有楼层信息时判断楼层和高低区
-    if(bgIndex>0){
-        let totalLevel = Number(floorType.substring(bgIndex+1,edIndex));
+    if (bgIndex > 0) {
+        let totalLevel = Number(floorType.substring(bgIndex + 1, edIndex));
 
-        if(totalLevel>7) {
-            if(floorType.indexOf('低楼层')>=0) //有电梯的低区
+        if (totalLevel > 7) {
+            if (floorType.indexOf('低楼层') >= 0) //有电梯的低区
                 floorDisct = 9.5
-        }else{
-            if(floorType.indexOf('高楼层')>=0) //无电梯的高区
+        } else {
+            if (floorType.indexOf('高楼层') >= 0) //无电梯的高区
                 floorDisct = 9.5
         }
     }
